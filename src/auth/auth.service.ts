@@ -5,7 +5,7 @@ import { randomUUID } from 'crypto';
 import { RefreshAccessTokenDto } from './dto/refreshToken.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { UsersService } from 'src/user/users.service';
+import { UsersService } from '../user/users.service';
 
 @Injectable()
 export class AuthService {
@@ -14,25 +14,24 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly usersService: UsersService,
   ) {}
-  async refreshAccessToken({ phoneNumber }: RefreshAccessTokenDto) {
-    console.warn('Auth: Running mockup credentials');
+  async refreshAccessToken({ phoneNumber, id }: RefreshAccessTokenDto) {
     return {
       accessToken: await this.jwtService.signAsync(
         {
+          id,
           jwtId: randomUUID(),
           phoneNumber: phoneNumber,
         },
         {
           secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
-          expiresIn: '48h',
+          expiresIn: this.configService.get<string>('ACCESS_TOKEN_EXPIRE_DURATION'),
         },
       ),
     };
   }
 
   async login(loginDto: LoginDto) {
-    console.warn('Auth: Running mockup credentials');
-    const foundUser = await this.usersService.findOne(loginDto.phoneNumber);
+    const foundUser = await this.usersService.findOneByPhoneNumber(loginDto.phoneNumber);
     if (!foundUser) {
       return {
         error: 'mismatch',
@@ -42,11 +41,20 @@ export class AuthService {
     const isMatch = await compare(loginDto.password, foundUser.password);
     if (isMatch) {
       return {
+        id: foundUser.id,
+        firstName: foundUser.firstName,
+        lastName: foundUser.lastName,
         refreshToken: await this.jwtService.signAsync(
-          { jwtId: randomUUID(), phoneNumber: loginDto.phoneNumber },
           {
-            privateKey: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
-            expiresIn: '5m',
+            jwtId: randomUUID(),
+            id: foundUser.id,
+            phoneNumber: foundUser.phoneNumber,
+            firstName: foundUser.firstName,
+            lastName: foundUser.lastName,
+          },
+          {
+            secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
+            expiresIn: this.configService.get<string>('REFRESH_TOKEN_EXPIRE_DURATION'),
           },
         ),
       };

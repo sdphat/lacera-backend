@@ -7,13 +7,10 @@ import { AccessTokenAuthGuard } from './auth/accessToken.guard';
 import { APP_GUARD } from '@nestjs/core';
 import { UsersModule } from './user/users.module';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { User } from './user/models/user.model';
+import { ConversationModule } from './conversation/conversation.module';
 
 @Module({
   imports: [
-    AuthModule,
-    ConfigModule.forRoot(),
-    UsersModule,
     SequelizeModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -25,10 +22,17 @@ import { User } from './user/models/user.model';
         database: configService.get<string>('DB_NAME'),
         autoLoadModels: true,
         synchronize: true,
-        models: [User],
+        define: {
+          charset: 'utf8mb4',
+          collate: 'utf8mb4_unicode_ci',
+        },
       }),
       inject: [ConfigService],
     }),
+    AuthModule,
+    ConfigModule.forRoot(),
+    UsersModule,
+    ConversationModule,
   ],
   controllers: [AppController],
   providers: [

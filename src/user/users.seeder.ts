@@ -12,10 +12,29 @@ export class UsersSeeder implements Seeder {
     private readonly configService: ConfigService,
   ) {}
   async seed(): Promise<any> {
-    await this.userModel.sync({ force: true });
-    return this.userModel.create<User>({
+    await this.userModel.create<User>({
       phoneNumber: '+84784030266',
-      password: hashSync('12345678', this.configService.get<number>('PASSWORD_SALT_ROUNDS')),
+      password: hashSync('12345678', +this.configService.get<number>('PASSWORD_SALT_ROUNDS')),
+      firstName: 'John',
+      lastName: 'Smith',
+      lastActive: new Date(2023, 7, 20, 13),
+      avatarUrl: '/photo-1534528741775-53994a69daeb.jpg',
+    });
+    await this.userModel.create<User>({
+      phoneNumber: '+841234567',
+      password: hashSync('12345678', +this.configService.get<number>('PASSWORD_SALT_ROUNDS')),
+      firstName: 'Jane',
+      lastName: 'Doe',
+      lastActive: new Date(2023, 7, 20, 11, 19),
+      avatarUrl: '/avatar_2.png',
+    });
+    await this.userModel.create<User>({
+      phoneNumber: '+84111111',
+      password: hashSync('12345678', +this.configService.get<number>('PASSWORD_SALT_ROUNDS')),
+      firstName: 'James',
+      lastName: 'Jameron',
+      lastActive: new Date(2023, 7, 11, 13, 11),
+      avatarUrl: '/photo-1534528741775-53994a69daeb.jpg',
     });
   }
   async drop(): Promise<any> {

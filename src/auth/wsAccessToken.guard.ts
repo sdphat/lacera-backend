@@ -1,7 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { ERROR_EVENT_KEY, ExtendedSocket } from '../SocketUtils';
+import { ExtendedSocket } from '../SocketUtils';
 
 @Injectable()
 export class WsAccessTokenGuard implements CanActivate {
@@ -13,10 +13,7 @@ export class WsAccessTokenGuard implements CanActivate {
     const [client]: [ExtendedSocket] = context.getArgs();
     const authHeader = client.handshake.auth.token;
     if (!authHeader.startsWith('Bearer ')) {
-      client.emit(ERROR_EVENT_KEY, {
-        error: 'unauthorized',
-      });
-      return false;
+      return true;
     }
     const token = authHeader.replace('Bearer ', '');
     try {
@@ -27,8 +24,9 @@ export class WsAccessTokenGuard implements CanActivate {
       client.user = user;
       return true;
     } catch (ex) {
-      client.emit(ERROR_EVENT_KEY, { error: 'unauthorized' });
-      return false;
+      return true;
     }
   }
 }
+
+export const UNAUTHORIZED_ERROR = 'unauthorized';

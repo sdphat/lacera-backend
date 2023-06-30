@@ -20,7 +20,7 @@ export const ErrorEvent = (errorEvent: string) => SetMetadata(ERROR_EVENT_KEY, e
  * @returns Decorator
  */
 export const ExtendedSubscribeMessage = (message: string, errorEvent?: string): MethodDecorator => {
-  const _errorEvent = errorEvent || `${message}:error`;
+  const _errorEvent = errorEvent || message;
   const subscribeMessageDecorator = SubscribeMessage(message);
   const errorEventDecorator = ErrorEvent(_errorEvent);
   return (target, propertyKey, descriptor) => {

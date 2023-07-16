@@ -1,4 +1,4 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { CreateConversationDto } from './create-conversation.dto';
+import { CreatePrivateConversationDto } from './create-private-conversation.dto';
 
-export class UpdateConversationDto extends PartialType(CreateConversationDto) {}
+export class UpdateConversationDto extends PartialType(CreatePrivateConversationDto) {}

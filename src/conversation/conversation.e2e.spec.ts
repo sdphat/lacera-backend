@@ -33,7 +33,7 @@ describe('Conversation e2e', () => {
 
     client = io('http://localhost:3001/conversation', {
       auth: {
-        token: `Wah ${accessToken}`,
+        token: `Bearer ${accessToken}`,
       },
     });
 
@@ -49,8 +49,12 @@ describe('Conversation e2e', () => {
       console.log('Fetch all error: ', err);
     });
 
-    client.on('create', (message) => {
-      console.log('Create:' + message);
+    client.on('createPrivate', (message) => {
+      console.log('CreatePrivate:' + message);
+    });
+
+    client.on('createGroup', (message) => {
+      console.log('CreateGroup: ' + message);
     });
 
     client.on('create:error', (err) => console.log(err));
@@ -59,12 +63,13 @@ describe('Conversation e2e', () => {
       console.log('Update: ' + message);
     });
 
-    client.emit('fetchAll');
+    client.emit('createPrivate', {
+      targetId: 1,
+    });
 
-    client.emit('create', {
-      conversationId: 11,
-      content: 'Hello from nowhere',
-      postDate: new Date(2020, 10, 5),
+    client.emit('createGroup', {
+      participantIds: [1, 3],
+      title: 'Learning with friends 😊',
     });
   });
 });

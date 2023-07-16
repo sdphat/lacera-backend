@@ -1,3 +1,4 @@
 export class ConversationDetailsDto {
-  conversationId: number;
+  conversationId?: number;
+  userId?: number;
 }

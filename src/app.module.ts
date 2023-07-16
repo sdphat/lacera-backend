@@ -8,6 +8,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { UsersModule } from './user/users.module';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { ConversationModule } from './conversation/conversation.module';
+import { ContactsModule } from './contacts/contacts.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { ConversationModule } from './conversation/conversation.module';
     ConfigModule.forRoot(),
     UsersModule,
     ConversationModule,
+    ContactsModule,
   ],
   controllers: [AppController],
   providers: [

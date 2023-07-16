@@ -13,41 +13,33 @@ import { CreateMessageDto } from './dto/create-message.dto';
 import { Message } from './models/message.model';
 import { MessageService } from './message.service';
 import { FetchAllConversationsDto } from './dto/fetch-all-conversations.dto';
-import { Conversation } from './models/conversation.model';
+import {
+  Conversation,
+  GroupConversationAttributes,
+  PrivateConversationAttributes,
+} from './models/conversation.model';
 import { ConversationDetailsDto } from './dto/conversation-details.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { AuthGateway } from '../auth/authGateway';
+import { CreatePrivateConversationDto } from './dto/create-private-conversation.dto';
+import { CreateGroupConversationDto } from './dto/create-group-conversation.dto';
 
 @Public()
 @WebSocketGateway({ namespace: 'conversation', cors: { origin: '*' } })
-export class ConversationGateway implements OnGatewayConnection {
+export class ConversationGateway extends AuthGateway implements OnGatewayConnection {
   constructor(
     private readonly conversationService: ConversationService,
     private readonly messageService: MessageService,
-    private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
-  ) {}
-
-  async handleConnection(client: ExtendedSocket, ...args: any[]) {
-    const authHeader = client.handshake.auth.token;
-    if (!authHeader.startsWith('Bearer ')) {
-      return;
-    }
-    const token = authHeader.replace('Bearer ', '');
-    try {
-      const user = await this.jwtService.verifyAsync(token, {
-        ignoreExpiration: false,
-        secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
-      });
-      client.join(`users/${user.id}`);
-    } catch (ex) {
-      return;
-    }
+    jwtService: JwtService,
+    configService: ConfigService,
+  ) {
+    super(jwtService, configService);
   }
 
-  @ExtendedSubscribeMessage('create')
+  @ExtendedSubscribeMessage('createMessage')
   @UseGuards(WsAccessTokenGuard)
-  async create(
+  async createMessage(
     @MessageBody() createMessageDto: CreateMessageDto,
     @ConnectedSocket() client: ExtendedSocket,
   ): Promise<{ data: Message } | { error: string }> {
@@ -59,11 +51,61 @@ export class ConversationGateway implements OnGatewayConnection {
         userId: client.user.id,
         ...createMessageDto,
       });
-      const conversation = await this.conversationService.findOne(message.conversationId);
+      const conversation = await this.conversationService.findOneById(message.conversationId);
       const participantIds = conversation.participants.map((p) => p.id);
       client.emit('update', message);
       participantIds.forEach((id) => client.to(`users/${id}`).emit('update', message));
       return { data: message };
+    } catch (ex) {
+      return { error: ex.message };
+    }
+  }
+
+  @ExtendedSubscribeMessage('createPrivate')
+  @UseGuards(WsAccessTokenGuard)
+  async createPrivate(
+    @MessageBody() { targetId }: CreatePrivateConversationDto,
+    @ConnectedSocket() client: ExtendedSocket,
+  ): Promise<{ data: PrivateConversationAttributes } | { error: string }> {
+    if (!client.user) {
+      return { error: UNAUTHORIZED_ERROR };
+    }
+    if (targetId === client.user.id) {
+      return { error: 'target id cannot be the same as user id' };
+    }
+    const participantIds: [number, number] = [targetId, client.user.id];
+    try {
+      if (participantIds && participantIds.length === 2) {
+        const response = await this.conversationService.createPrivate({ participantIds });
+        if ('error' in response) {
+          return { error: response.error };
+        }
+        return { data: response as PrivateConversationAttributes };
+      }
+      return { error: 'malformatted' };
+    } catch (ex) {
+      return { error: 'server error' };
+    }
+  }
+
+  @ExtendedSubscribeMessage('createGroup')
+  @UseGuards(WsAccessTokenGuard)
+  async createGroup(
+    @MessageBody() { participantIds, title }: CreateGroupConversationDto,
+    @ConnectedSocket() client: ExtendedSocket,
+  ): Promise<{ data: GroupConversationAttributes } | { error: string }> {
+    if (!client.user) {
+      return { error: UNAUTHORIZED_ERROR };
+    }
+    if (!participantIds.length) {
+      return { error: 'participantIds list cannot be empty' };
+    }
+    try {
+      const conversation = (await this.conversationService.createGroup({
+        participantIds: [...participantIds, client.user.id],
+        title: title,
+      })) as GroupConversationAttributes;
+      return { data: conversation };
     } catch (ex) {
       return { error: ex.message };
     }
@@ -94,7 +136,20 @@ export class ConversationGateway implements OnGatewayConnection {
     if (!client.user) {
       return { error: UNAUTHORIZED_ERROR };
     }
-    const data = await this.conversationService.findOne(conversationDetailsDto.conversationId);
-    return { data };
+
+    if (conversationDetailsDto.conversationId) {
+      const data = await this.conversationService.findOneById(
+        conversationDetailsDto.conversationId,
+      );
+      return { data };
+    }
+
+    if (conversationDetailsDto.userId) {
+      const data = await this.conversationService.findPrivateByUserIds([
+        conversationDetailsDto.userId,
+        client.user.id,
+      ]);
+      return { data };
+    }
   }
 }

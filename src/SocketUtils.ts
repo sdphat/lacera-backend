@@ -1,5 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
-import { SubscribeMessage, WsResponse } from '@nestjs/websockets';
+import { OnGatewayConnection, SubscribeMessage, WsResponse } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
 
 export interface ExtendedSocket extends Socket {

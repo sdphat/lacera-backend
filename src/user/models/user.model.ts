@@ -1,15 +1,18 @@
-import { Column, Table, Model, Unique, BelongsToMany } from 'sequelize-typescript';
+import { Column, Table, Model, Unique, BelongsToMany, HasMany } from 'sequelize-typescript';
 import { Conversation } from '../../conversation/models/conversation.model';
 import { ConversationUser } from '../../conversation/models/conversation-user.model';
+import { Friend } from './friend.model';
 
 export interface UserAttributes {
-  userId: number;
+  id: number;
   phoneNumber: string;
   password: string;
   firstName: string;
   lastName: string;
   lastActive: Date;
   avatarUrl: string;
+  backgroundUrl: string;
+  aboutMe: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -36,6 +39,18 @@ export class User extends Model<UserAttributes, CreationalUserAttributes> {
   @Column
   avatarUrl: string;
 
+  @Column
+  backgroundUrl: string;
+
+  @Column
+  aboutMe: string;
+
   @BelongsToMany(() => Conversation, () => ConversationUser)
   conversations: Conversation[];
+
+  @HasMany(() => ConversationUser)
+  conversationUsers: ConversationUser[];
+
+  @HasMany(() => Friend, 'userId')
+  friends: User[];
 }

@@ -5,6 +5,8 @@ import { UsersModule } from './user/users.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ConversationModule } from './conversation/conversation.module';
 import { ConversationsSeeder } from './conversation/conversation.seeder';
+import { ContactsModule } from './contacts/contacts.module';
+import { ContactsSeeder } from './contacts/contacts.seeder';
 
 seeder({
   imports: [
@@ -31,5 +33,6 @@ seeder({
     ConfigModule.forRoot(),
     UsersModule,
     ConversationModule,
+    ContactsModule,
   ],
-}).run([UsersSeeder, ConversationsSeeder]);
+}).run([UsersSeeder, ConversationsSeeder, ContactsSeeder]);

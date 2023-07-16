@@ -13,60 +13,62 @@ export class ConversationsSeeder implements Seeder {
     @InjectModel(Message) private readonly messageModel: typeof Message,
   ) {}
   async seed(): Promise<any> {
-    await this.conversationModel.bulkCreate([
-      { title: 'Games', avatar: '/photo-1534528741775-53994a69daeb.jpg' },
-      { title: 'Study', avatar: '/photo-1534528741775-53994a69daeb.jpg' },
-    ]);
+    const privateConv = await this.conversationModel.create({ type: 'private' });
+    const groupConv = await this.conversationModel.create({
+      type: 'group',
+      title: 'Skiing',
+      background: 'background_2.jpg',
+    });
     await this.conversationUserModel.bulkCreate([
-      { conversationId: 1, userId: 1 },
+      { conversationId: privateConv.id, userId: 1 },
       {
-        conversationId: 1,
+        conversationId: privateConv.id,
         userId: 2,
       },
-      { conversationId: 2, userId: 1 },
+      { conversationId: groupConv.id, userId: 1 },
       {
-        conversationId: 2,
+        conversationId: groupConv.id,
         userId: 2,
       },
       {
-        conversationId: 2,
+        conversationId: groupConv.id,
         userId: 3,
       },
     ]);
     await this.messageModel.bulkCreate([
       {
         senderId: 1,
-        conversationId: 1,
+        conversationId: privateConv.id,
         content: 'Hello World',
         createdAt: new Date(2023, 4, 18, 8),
       },
       {
         senderId: 2,
-        conversationId: 1,
+        conversationId: privateConv.id,
         content: 'What the hell?',
         createdAt: new Date(2023, 4, 18, 8, 2),
       },
       {
         senderId: 2,
-        conversationId: 1,
+        conversationId: privateConv.id,
         content: 'Stop talking like that',
         createdAt: new Date(2023, 4, 18, 8, 3),
       },
       {
         senderId: 1,
-        conversationId: 2,
+        conversationId: groupConv.id,
         content: 'Hello World',
         createdAt: new Date(2023, 4, 18, 8),
       },
       {
         senderId: 2,
-        conversationId: 2,
+        conversationId: groupConv.id,
         content: 'What the hell?',
         createdAt: new Date(2023, 4, 18, 8, 2),
       },
       {
         senderId: 3,
-        conversationId: 2,
+        conversationId: groupConv.id,
         content: 'Stop talking like that',
         createdAt: new Date(2023, 4, 18, 8, 3),
       },

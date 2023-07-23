@@ -1,10 +1,5 @@
 import { UseGuards } from '@nestjs/common';
-import {
-  ConnectedSocket,
-  MessageBody,
-  OnGatewayConnection,
-  WebSocketGateway,
-} from '@nestjs/websockets';
+import { ConnectedSocket, MessageBody, WebSocketGateway } from '@nestjs/websockets';
 import { ExtendedSocket, ExtendedSubscribeMessage } from '../SocketUtils';
 import { UNAUTHORIZED_ERROR, WsAccessTokenGuard } from '../auth/wsAccessToken.guard';
 import { Public } from '../auth/accessToken.guard';
@@ -24,17 +19,19 @@ import { ConfigService } from '@nestjs/config';
 import { AuthGateway } from '../auth/authGateway';
 import { CreatePrivateConversationDto } from './dto/create-private-conversation.dto';
 import { CreateGroupConversationDto } from './dto/create-group-conversation.dto';
+import { UsersService } from '../user/users.service';
 
 @Public()
 @WebSocketGateway({ namespace: 'conversation', cors: { origin: '*' } })
-export class ConversationGateway extends AuthGateway implements OnGatewayConnection {
+export class ConversationGateway extends AuthGateway {
   constructor(
     private readonly conversationService: ConversationService,
     private readonly messageService: MessageService,
+    usersService: UsersService,
     jwtService: JwtService,
     configService: ConfigService,
   ) {
-    super(jwtService, configService);
+    super(jwtService, configService, usersService);
   }
 
   @ExtendedSubscribeMessage('createMessage')

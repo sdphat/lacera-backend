@@ -1,4 +1,13 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateUserDto } from './create-user.dto';
+import { UserAttributes } from '../models/user.model';
 
-export class UpdateUserDto extends PartialType(CreateUserDto) {}
+export class UpdateUserDto implements Partial<Omit<UserAttributes, 'id'>> {
+  aboutMe?: string;
+  password?: string;
+  lastName?: string;
+  lastActive?: Date;
+  phoneNumber?: string;
+  avatarUrl?: string;
+  backgroundUrl?: string;
+  firstName?: string;
+  online?: boolean;
+}

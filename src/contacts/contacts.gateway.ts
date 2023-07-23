@@ -13,6 +13,7 @@ import { CancelFriendReqDto } from './dto/cancel-friend-req.dto';
 import { AcceptFriendReqDto } from './dto/accept-friend-req.dto';
 import { RejectFriendReqDto } from './dto/reject-friend-req.dto';
 import { FetchContactDto } from './dto/fetch-contact.dto';
+import { UsersService } from '../user/users.service';
 
 @Public()
 @WebSocketGateway({ namespace: 'contacts', cors: { origin: '*' } })
@@ -21,8 +22,9 @@ export class ContactsGateway extends AuthGateway {
     private readonly contactsService: ContactsService,
     jwtService: JwtService,
     configService: ConfigService,
+    usersService: UsersService,
   ) {
-    super(jwtService, configService);
+    super(jwtService, configService, usersService);
   }
 
   @ExtendedSubscribeMessage('fetchAll')

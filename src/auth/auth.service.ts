@@ -14,12 +14,13 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly usersService: UsersService,
   ) {}
-  async refreshAccessToken({ phoneNumber, id }: RefreshAccessTokenDto) {
+  async refreshAccessToken({ phoneNumber, id, jwtFamilyId }: RefreshAccessTokenDto) {
     return {
       accessToken: await this.jwtService.signAsync(
         {
           id,
           jwtId: randomUUID(),
+          jwtFamilyId,
           phoneNumber: phoneNumber,
         },
         {
@@ -39,6 +40,7 @@ export class AuthService {
     }
 
     const isMatch = await compare(loginDto.password, foundUser.password);
+    const jwtFamilyId = randomUUID();
     if (isMatch) {
       return {
         id: foundUser.id,
@@ -46,7 +48,7 @@ export class AuthService {
         lastName: foundUser.lastName,
         refreshToken: await this.jwtService.signAsync(
           {
-            jwtId: randomUUID(),
+            jwtId: jwtFamilyId,
             id: foundUser.id,
             phoneNumber: foundUser.phoneNumber,
             firstName: foundUser.firstName,

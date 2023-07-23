@@ -4,10 +4,14 @@ import { LoginDto } from './dto/login.dto';
 import { Response } from 'express';
 import { Public } from './accessToken.guard';
 import { AuthGuard } from '@nestjs/passport';
+import { UsersService } from '../user/users.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Public()
   @Post('refresh')
@@ -32,9 +36,13 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout(@Req() request) {
+  async logout(@Req() request: Request) {
     console.warn('Running mock up logout function');
-    const user = request.user;
-    return;
+    const user = (request as any).user;
+    try {
+      this.usersService.update(user.id, { online: false, lastActive: new Date() });
+    } catch (ex) {
+      console.log(ex);
+    }
   }
 }

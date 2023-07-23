@@ -7,6 +7,8 @@ import { Friend } from '../user/models/friend.model';
 import { SearchContactsDto } from './dto/search-contacts.dto';
 import { Op } from 'sequelize';
 
+const userReturnAttributes = ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl', 'online'];
+
 const transformFriendStatus = (friend: Friend, userId: number) => {
   let status: string;
 
@@ -44,7 +46,7 @@ export class ContactsService {
     ).map((f) => f.friendId);
 
     const friends = await this.userModel.findAll({
-      attributes: ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl'],
+      attributes: userReturnAttributes,
       where: {
         id: friendIds,
       },
@@ -55,7 +57,7 @@ export class ContactsService {
 
   async search(searchDto: SearchContactsDto) {
     return this.userModel.findAll({
-      attributes: ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl'],
+      attributes: userReturnAttributes,
       where: {
         [Op.or]: [
           {

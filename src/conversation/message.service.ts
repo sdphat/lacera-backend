@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { CreateMessageServiceDto } from './dto/create-message.dto';
-import { UpdateMessageDto } from './dto/update-message.dto';
 import { InjectModel } from '@nestjs/sequelize';
 import { Message } from './models/message.model';
 import { User } from '../user/models/user.model';
 import { Conversation } from '../conversation/models/conversation.model';
+
+const userReturnAttributes = ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl', 'online'];
 
 @Injectable()
 export class MessageService {
@@ -26,7 +27,7 @@ export class MessageService {
         include: [
           {
             model: User,
-            attributes: ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl'],
+            attributes: userReturnAttributes,
           },
         ],
       });
@@ -41,10 +42,6 @@ export class MessageService {
 
   findOne(id: number) {
     return `This action returns a #${id} message`;
-  }
-
-  update(id: number, updateMessageDto: UpdateMessageDto) {
-    return `This action updates a #${id} message`;
   }
 
   remove(id: number) {

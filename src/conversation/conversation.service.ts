@@ -8,7 +8,8 @@ import { ServiceFetchAllConversationsDto } from './dto/service-fetch-all-convers
 import { Message } from './models/message.model';
 import { CreateGroupConversationDto } from './dto/create-group-conversation.dto';
 import { Sequelize } from 'sequelize-typescript';
-import { Op } from 'sequelize';
+
+const userReturnAttributes = ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl', 'online'];
 
 @Injectable()
 export class ConversationService {
@@ -45,14 +46,14 @@ export class ConversationService {
         include: [
           {
             model: User,
-            attributes: ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl'],
+            attributes: userReturnAttributes,
           },
           {
             model: Message,
             include: [
               {
                 model: User,
-                attributes: ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl'],
+                attributes: userReturnAttributes,
               },
             ],
             order: [['createdAt', 'ASC']],
@@ -75,14 +76,14 @@ export class ConversationService {
         include: [
           {
             model: User,
-            attributes: ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl'],
+            attributes: userReturnAttributes,
           },
           {
             model: Message,
             include: [
               {
                 model: User,
-                attributes: ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl'],
+                attributes: userReturnAttributes,
               },
             ],
             order: [['createdAt', 'ASC']],
@@ -148,14 +149,14 @@ export class ConversationService {
       include: [
         {
           model: User,
-          attributes: ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl'],
+          attributes: userReturnAttributes,
         },
         {
           model: Message,
           include: [
             {
               model: User,
-              attributes: ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl'],
+              attributes: userReturnAttributes,
             },
           ],
           order: [['createdAt', 'ASC']],
@@ -170,14 +171,14 @@ export class ConversationService {
       include: [
         {
           model: User,
-          attributes: ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl'],
+          attributes: userReturnAttributes,
         },
         {
           model: Message,
           include: [
             {
               model: User,
-              attributes: ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl'],
+              attributes: userReturnAttributes,
             },
           ],
           order: [['createdAt', 'ASC']],
@@ -197,14 +198,14 @@ export class ConversationService {
       include: [
         {
           model: User,
-          attributes: ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl'],
+          attributes: userReturnAttributes,
         },
         {
           model: Message,
           include: [
             {
               model: User,
-              attributes: ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl'],
+              attributes: userReturnAttributes,
             },
           ],
         },
@@ -222,14 +223,14 @@ export class ConversationService {
       include: [
         {
           model: User,
-          attributes: ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl'],
+          attributes: userReturnAttributes,
         },
         {
           model: Message,
           include: [
             {
               model: User,
-              attributes: ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl'],
+              attributes: userReturnAttributes,
             },
           ],
         },
@@ -249,14 +250,14 @@ export class ConversationService {
           where: {
             id: participantIds,
           },
-          attributes: ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl'],
+          attributes: userReturnAttributes,
         },
         {
           model: Message,
           include: [
             {
               model: User,
-              attributes: ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl'],
+              attributes: userReturnAttributes,
             },
           ],
         },

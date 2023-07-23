@@ -13,6 +13,7 @@ export interface UserAttributes {
   avatarUrl: string;
   backgroundUrl: string;
   aboutMe: string;
+  online: boolean;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -41,6 +42,9 @@ export class User extends Model<UserAttributes, CreationalUserAttributes> {
 
   @Column
   backgroundUrl: string;
+
+  @Column({ defaultValue: false })
+  online: boolean;
 
   @Column
   aboutMe: string;

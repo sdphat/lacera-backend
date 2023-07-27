@@ -20,6 +20,7 @@ import { AuthGateway } from '../auth/authGateway';
 import { CreatePrivateConversationDto } from './dto/create-private-conversation.dto';
 import { CreateGroupConversationDto } from './dto/create-group-conversation.dto';
 import { UsersService } from '../user/users.service';
+import { UpdateMessageStatusDto } from './dto/update-message-status.dto';
 
 @Public()
 @WebSocketGateway({ namespace: 'conversation', cors: { origin: '*' } })
@@ -121,6 +122,7 @@ export class ConversationGateway extends AuthGateway {
     let data = [];
 
     data = await this.conversationService.getAll({ ...fetchAllDto, user });
+    console.log(data);
     return { data };
   }
 
@@ -142,11 +144,25 @@ export class ConversationGateway extends AuthGateway {
     }
 
     if (conversationDetailsDto.userId) {
-      const data = await this.conversationService.findPrivateByUserIds([
+      const data = await this.conversationService.findPrivateByUserIds(client.user.id, [
         conversationDetailsDto.userId,
         client.user.id,
       ]);
       return { data };
     }
+  }
+
+  @ExtendedSubscribeMessage('updateMessageStatus')
+  @UseGuards(WsAccessTokenGuard)
+  async updateMessageStatus(
+    @ConnectedSocket() client: ExtendedSocket,
+    @MessageBody() { messageId }: UpdateMessageStatusDto,
+  ) {
+    if (!client.user) {
+      return { error: UNAUTHORIZED_ERROR };
+    }
+
+    await this.messageService.updateMessageStatus({ messageId, userId: client.user.id });
+    return { data: true };
   }
 }

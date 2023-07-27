@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Message } from './models/message.model';
 import { User } from '../user/models/user.model';
 import { Conversation } from '../conversation/models/conversation.model';
+import { MessageRecipient } from './models/message-recipient.model';
 
 const userReturnAttributes = ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl', 'online'];
 
@@ -13,6 +14,7 @@ export class MessageService {
     @InjectModel(Message) private readonly messageModel: typeof Message,
     @InjectModel(User) private readonly userModel: typeof User,
     @InjectModel(Conversation) private readonly conversationModel: typeof Conversation,
+    @InjectModel(MessageRecipient) private readonly messageRecipientModel: typeof MessageRecipient,
   ) {}
   async create({ userId, content, conversationId, postDate }: CreateMessageServiceDto) {
     const conversation = await this.conversationModel.findByPk(conversationId);
@@ -34,6 +36,15 @@ export class MessageService {
     } else {
       throw new Error('No conversation found');
     }
+  }
+
+  async updateMessageStatus({ userId, messageId }: { userId: number; messageId: number }) {
+    await this.messageRecipientModel.findOrCreate({
+      where: {
+        recipientId: userId,
+        messageId,
+      },
+    });
   }
 
   findAll() {

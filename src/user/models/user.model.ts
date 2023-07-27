@@ -2,6 +2,7 @@ import { Column, Table, Model, Unique, BelongsToMany, HasMany } from 'sequelize-
 import { Conversation } from '../../conversation/models/conversation.model';
 import { ConversationUser } from '../../conversation/models/conversation-user.model';
 import { Friend } from './friend.model';
+import { MessageRecipient } from '../../conversation/models/message-recipient.model';
 
 export interface UserAttributes {
   id: number;
@@ -54,6 +55,9 @@ export class User extends Model<UserAttributes, CreationalUserAttributes> {
 
   @HasMany(() => ConversationUser)
   conversationUsers: ConversationUser[];
+
+  @HasMany(() => MessageRecipient)
+  messageUsers: MessageRecipient[];
 
   @HasMany(() => Friend, 'userId')
   friends: User[];

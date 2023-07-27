@@ -8,6 +8,7 @@ import { ServiceFetchAllConversationsDto } from './dto/service-fetch-all-convers
 import { Message } from './models/message.model';
 import { CreateGroupConversationDto } from './dto/create-group-conversation.dto';
 import { Sequelize } from 'sequelize-typescript';
+import { MessageRecipient } from './models/message-recipient.model';
 
 const userReturnAttributes = ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl', 'online'];
 
@@ -239,8 +240,8 @@ export class ConversationService {
     return privateConversation;
   }
 
-  async findPrivateByUserIds(participantIds: [number, number]) {
-    return this.conversationModel.findOne({
+  async findPrivateByUserIds(userId: number, participantIds: [number, number]) {
+    const conversation = await this.conversationModel.findOne({
       where: {
         type: 'private',
       },
@@ -259,10 +260,25 @@ export class ConversationService {
               model: User,
               attributes: userReturnAttributes,
             },
+            {
+              model: MessageRecipient,
+              attributes: ['messageStatus'],
+              where: {
+                recipientId: userId,
+              },
+            },
           ],
         },
       ],
     });
+    conversation.messages.forEach((message) => {
+      if (userId !== message.senderId) {
+        const recipientMessageStatus =
+          message.messageUsers.length > 0 ? message.messageUsers[0].messageStatus : 'received';
+        message.status = recipientMessageStatus;
+      }
+    });
+    return conversation;
   }
 
   update(id: number, updateConversationDto: UpdateConversationDto) {

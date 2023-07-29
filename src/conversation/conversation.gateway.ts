@@ -49,7 +49,10 @@ export class ConversationGateway extends AuthGateway {
         userId: client.user.id,
         ...createMessageDto,
       });
-      const conversation = await this.conversationService.findOneById(message.conversationId);
+      const conversation = await this.conversationService.findOneById({
+        id: message.conversationId,
+        userId: client.user.id,
+      });
       const participantIds = conversation.participants.map((p) => p.id);
       client.emit('update', message);
       participantIds.forEach((id) => client.to(`users/${id}`).emit('update', message));
@@ -74,7 +77,10 @@ export class ConversationGateway extends AuthGateway {
     const participantIds: [number, number] = [targetId, client.user.id];
     try {
       if (participantIds && participantIds.length === 2) {
-        const response = await this.conversationService.createPrivate({ participantIds });
+        const response = await this.conversationService.createPrivate({
+          participantIds,
+          userId: client.user.id,
+        });
         if ('error' in response) {
           return { error: response.error };
         }
@@ -102,6 +108,7 @@ export class ConversationGateway extends AuthGateway {
       const conversation = (await this.conversationService.createGroup({
         participantIds: [...participantIds, client.user.id],
         title: title,
+        userId: client.user.id,
       })) as GroupConversationAttributes;
       return { data: conversation };
     } catch (ex) {
@@ -122,7 +129,6 @@ export class ConversationGateway extends AuthGateway {
     let data = [];
 
     data = await this.conversationService.getAll({ ...fetchAllDto, user });
-    console.log(data);
     return { data };
   }
 
@@ -137,9 +143,10 @@ export class ConversationGateway extends AuthGateway {
     }
 
     if (conversationDetailsDto.conversationId) {
-      const data = await this.conversationService.findOneById(
-        conversationDetailsDto.conversationId,
-      );
+      const data = await this.conversationService.findOneById({
+        id: conversationDetailsDto.conversationId,
+        userId: client.user.id,
+      });
       return { data };
     }
 

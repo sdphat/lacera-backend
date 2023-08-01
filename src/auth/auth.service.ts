@@ -46,6 +46,7 @@ export class AuthService {
         id: foundUser.id,
         firstName: foundUser.firstName,
         lastName: foundUser.lastName,
+        avatarUrl: foundUser.avatarUrl,
         refreshToken: await this.jwtService.signAsync(
           {
             jwtId: jwtFamilyId,

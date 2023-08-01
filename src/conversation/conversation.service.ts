@@ -163,7 +163,37 @@ export class ConversationService {
       };
     }
 
-    return populateMessageStatusField(conversation, userId) as any as GroupConversationAttributes;
+    const returnConversation = await Conversation.findByPk(conversation.id, {
+      include: [
+        {
+          model: User,
+          attributes: userReturnAttributes,
+        },
+        {
+          model: Message,
+          include: [
+            {
+              model: User,
+              attributes: userReturnAttributes,
+            },
+            {
+              model: MessageRecipient,
+              attributes: ['messageStatus'],
+              required: false,
+              where: {
+                recipientId: userId,
+              },
+            },
+          ],
+          order: [['createdAt', 'ASC']],
+        },
+      ],
+    });
+
+    return populateMessageStatusField(
+      returnConversation,
+      userId,
+    ) as any as GroupConversationAttributes;
   }
 
   async getAll({ query, user }: ServiceFetchAllConversationsDto) {
@@ -204,6 +234,7 @@ export class ConversationService {
             {
               model: MessageRecipient,
               attributes: ['messageStatus'],
+              required: false,
               where: {
                 recipientId: userId,
               },
@@ -234,6 +265,7 @@ export class ConversationService {
             {
               model: MessageRecipient,
               attributes: ['messageStatus'],
+              required: false,
               where: {
                 recipientId: userId,
               },
@@ -270,6 +302,7 @@ export class ConversationService {
             {
               model: MessageRecipient,
               attributes: ['messageStatus'],
+              required: false,
               where: {
                 recipientId: userId,
               },
@@ -304,6 +337,7 @@ export class ConversationService {
             {
               model: MessageRecipient,
               attributes: ['messageStatus'],
+              required: false,
               where: {
                 recipientId: userId,
               },
@@ -340,6 +374,7 @@ export class ConversationService {
             {
               model: MessageRecipient,
               attributes: ['messageStatus'],
+              required: false,
               where: {
                 recipientId: userId,
               },

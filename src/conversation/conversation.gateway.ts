@@ -106,7 +106,7 @@ export class ConversationGateway extends AuthGateway {
     }
     try {
       const conversation = (await this.conversationService.createGroup({
-        participantIds: [...participantIds, client.user.id],
+        participantIds: participantIds,
         title: title,
         userId: client.user.id,
       })) as GroupConversationAttributes;

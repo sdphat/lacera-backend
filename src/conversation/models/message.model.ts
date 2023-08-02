@@ -1,7 +1,7 @@
 import { Column, Model, ForeignKey, BelongsTo, Table, HasMany } from 'sequelize-typescript';
 import { Conversation } from '../models/conversation.model';
 import { User } from '../../user/models/user.model';
-import { MessageRecipient } from './message-recipient.model';
+import { MessageUser } from './message-recipient.model';
 
 export type MessageStatus = 'received' | 'deleted';
 
@@ -13,8 +13,8 @@ export class Message extends Model {
   @BelongsTo(() => User)
   sender: User;
 
-  @HasMany(() => MessageRecipient)
-  messageUsers: MessageRecipient[];
+  @HasMany(() => MessageUser)
+  messageUsers: MessageUser[];
 
   @ForeignKey(() => Conversation)
   conversationId: number;

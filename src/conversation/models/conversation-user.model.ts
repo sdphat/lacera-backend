@@ -13,4 +13,7 @@ export class ConversationUser extends Model {
   @ForeignKey(() => User)
   @Column
   userId: number;
+
+  @Column({ defaultValue: false })
+  deleted: boolean;
 }

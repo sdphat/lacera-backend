@@ -21,6 +21,7 @@ import { CreatePrivateConversationDto } from './dto/create-private-conversation.
 import { CreateGroupConversationDto } from './dto/create-group-conversation.dto';
 import { UsersService } from '../user/users.service';
 import { UpdateMessageStatusDto } from './dto/update-message-status.dto';
+import { RemoveConversationDto } from './dto/remove-conversation.dto';
 
 @Public()
 @WebSocketGateway({ namespace: 'conversation', cors: { origin: '*' } })
@@ -77,7 +78,7 @@ export class ConversationGateway extends AuthGateway {
     const participantIds: [number, number] = [targetId, client.user.id];
     try {
       if (participantIds && participantIds.length === 2) {
-        const response = await this.conversationService.createPrivate({
+        const response = await this.conversationService.findOrCreatePrivate({
           participantIds,
           userId: client.user.id,
         });
@@ -170,6 +171,20 @@ export class ConversationGateway extends AuthGateway {
     }
 
     await this.messageService.updateMessageStatus({ messageId, userId: client.user.id });
+    return { data: true };
+  }
+
+  @ExtendedSubscribeMessage('removeConversation')
+  @UseGuards(WsAccessTokenGuard)
+  async removeConversation(
+    @ConnectedSocket() client: ExtendedSocket,
+    @MessageBody() { conversationId }: RemoveConversationDto,
+  ) {
+    if (!client.user) {
+      return { error: UNAUTHORIZED_ERROR };
+    }
+
+    await this.conversationService.remove({ id: conversationId, userId: client.user.id });
     return { data: true };
   }
 }

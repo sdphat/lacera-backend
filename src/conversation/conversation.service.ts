@@ -1,14 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { UpdateConversationDto } from './dto/update-conversation.dto';
 import { InjectModel } from '@nestjs/sequelize';
-import { Conversation, GroupConversationAttributes } from './models/conversation.model';
+import {
+  Conversation,
+  ConversationType,
+  GroupConversationAttributes,
+} from './models/conversation.model';
 import { User } from '../user/models/user.model';
 import { ConversationUser } from './models/conversation-user.model';
 import { ServiceFetchAllConversationsDto } from './dto/service-fetch-all-conversations.dto';
 import { Message } from './models/message.model';
 import { CreateGroupConversationDto } from './dto/create-group-conversation.dto';
 import { Sequelize } from 'sequelize-typescript';
-import { MessageRecipient } from './models/message-recipient.model';
+import { MessageUser } from './models/message-recipient.model';
+import { Includeable, Op } from 'sequelize';
+import { MessageService } from './message.service';
 
 const userReturnAttributes = ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl', 'online'];
 
@@ -20,6 +26,8 @@ const userReturnAttributes = ['id', 'firstName', 'lastName', 'lastActive', 'avat
  */
 const populateMessageStatusField = (conversation: Conversation, userId: number) => {
   conversation.messages.forEach((message) => {
+    // If the user is on recipient side
+    // then update the message status to match with that side.
     if (userId !== message.senderId) {
       const recipientMessageStatus =
         message.messageUsers.length > 0 ? message.messageUsers[0].messageStatus : 'received';
@@ -29,24 +37,87 @@ const populateMessageStatusField = (conversation: Conversation, userId: number) 
   return conversation;
 };
 
+const getConversationInclude = (userId: number): Includeable[] => [
+  {
+    model: User,
+    attributes: userReturnAttributes,
+  },
+  {
+    model: ConversationUser,
+    attributes: [],
+    where: {
+      userId,
+      deleted: false,
+    },
+  },
+  {
+    model: Message,
+    include: [
+      {
+        model: User,
+        attributes: userReturnAttributes,
+      },
+      {
+        model: MessageUser,
+        required: false,
+        attributes: ['messageStatus'],
+        where: {
+          recipientId: userId,
+        },
+      },
+    ],
+    order: [['createdAt', 'ASC']],
+  },
+];
+
 @Injectable()
 export class ConversationService {
   constructor(
     @InjectModel(Conversation) private readonly conversationModel: typeof Conversation,
     @InjectModel(ConversationUser) private readonly conversationUserModel: typeof ConversationUser,
+    @InjectModel(Message) private readonly messageModel: typeof Message,
+    private readonly messageService: MessageService,
   ) {}
 
-  async createPrivate({
+  private async getConversation(conversationId: number, userId: number) {
+    const conversationUser = await this.conversationUserModel.findOne({
+      where: {
+        conversationId,
+        userId,
+      },
+    });
+    if (conversationUser.deleted) {
+      return null;
+    }
+    const conversation = await this.conversationModel.findByPk(conversationId, {
+      include: getConversationInclude(userId),
+    });
+    conversation.set(
+      'messages',
+      conversation.messages.filter((m) => {
+        if (!m.messageUsers.length) {
+          return true;
+        }
+        return m.messageUsers[0].messageStatus !== 'deleted';
+      }),
+      {
+        raw: true,
+      },
+    );
+    return populateMessageStatusField(conversation, userId);
+  }
+
+  async findOrCreatePrivate({
     participantIds,
     userId,
   }: {
     participantIds: [number, number];
     userId: number;
   }) {
-    let conversationUser;
+    let conversationUser: ConversationUser | null;
     try {
       conversationUser = await this.conversationUserModel.findOne({
-        attributes: ['conversationId'],
+        attributes: ['conversationId', 'userId', 'deleted'],
         having: Sequelize.literal('COUNT(DISTINCT conversationUser.userId) = 2'),
         group: ['conversationId'],
         where: {
@@ -63,36 +134,17 @@ export class ConversationService {
       });
     } catch (ex) {
       console.log(ex);
+      return;
     }
 
     if (conversationUser) {
-      const conversation = await this.conversationModel.findByPk(conversationUser.conversationId, {
-        include: [
-          {
-            model: User,
-            attributes: userReturnAttributes,
-          },
-          {
-            model: Message,
-            include: [
-              {
-                model: User,
-                attributes: userReturnAttributes,
-              },
-              {
-                model: MessageRecipient,
-                attributes: ['messageStatus'],
-                where: {
-                  recipientId: userId,
-                },
-              },
-            ],
-            order: [['createdAt', 'ASC']],
-          },
-        ],
-      });
-
-      return populateMessageStatusField(conversation, userId);
+      try {
+        conversationUser.deleted = false;
+        await conversationUser.save();
+        return this.getConversation(conversationUser.conversationId, userId);
+      } catch (ex) {
+        console.log(ex);
+      }
     }
 
     try {
@@ -104,33 +156,7 @@ export class ConversationService {
         participantIds.map((id) => ({ userId: id, conversationId: conversation.id })),
       );
 
-      const returnConversation = await this.conversationModel.findByPk(conversation.id, {
-        include: [
-          {
-            model: User,
-            attributes: userReturnAttributes,
-          },
-          {
-            model: Message,
-            include: [
-              {
-                model: User,
-                attributes: userReturnAttributes,
-              },
-              {
-                model: MessageRecipient,
-                attributes: ['messageStatus'],
-                where: {
-                  recipientId: userId,
-                },
-              },
-            ],
-            order: [['createdAt', 'ASC']],
-          },
-        ],
-      });
-
-      return populateMessageStatusField(returnConversation, userId);
+      return this.getConversation(conversation.id, userId);
     } catch (ex) {
       console.log(ex);
       return {
@@ -162,38 +188,7 @@ export class ConversationService {
         error: 'some users do not exist',
       };
     }
-
-    const returnConversation = await Conversation.findByPk(conversation.id, {
-      include: [
-        {
-          model: User,
-          attributes: userReturnAttributes,
-        },
-        {
-          model: Message,
-          include: [
-            {
-              model: User,
-              attributes: userReturnAttributes,
-            },
-            {
-              model: MessageRecipient,
-              attributes: ['messageStatus'],
-              required: false,
-              where: {
-                recipientId: userId,
-              },
-            },
-          ],
-          order: [['createdAt', 'ASC']],
-        },
-      ],
-    });
-
-    return populateMessageStatusField(
-      returnConversation,
-      userId,
-    ) as any as GroupConversationAttributes;
+    return this.getConversation(conversation.id, userId) as any as GroupConversationAttributes;
   }
 
   async getAll({ query, user }: ServiceFetchAllConversationsDto) {
@@ -219,30 +214,7 @@ export class ConversationService {
         id: matchedConversationIds,
         type: 'group',
       },
-      include: [
-        {
-          model: User,
-          attributes: userReturnAttributes,
-        },
-        {
-          model: Message,
-          include: [
-            {
-              model: User,
-              attributes: userReturnAttributes,
-            },
-            {
-              model: MessageRecipient,
-              attributes: ['messageStatus'],
-              required: false,
-              where: {
-                recipientId: userId,
-              },
-            },
-          ],
-          order: [['createdAt', 'ASC']],
-        },
-      ],
+      include: getConversationInclude(userId),
     });
 
     const privates = await this.conversationModel.findAll({
@@ -250,105 +222,51 @@ export class ConversationService {
         id: matchedConversationIds,
         type: 'private',
       },
-      include: [
-        {
-          model: User,
-          attributes: userReturnAttributes,
-        },
-        {
-          model: Message,
-          include: [
-            {
-              model: User,
-              attributes: userReturnAttributes,
-            },
-            {
-              model: MessageRecipient,
-              attributes: ['messageStatus'],
-              required: false,
-              where: {
-                recipientId: userId,
-              },
-            },
-          ],
-          order: [['createdAt', 'ASC']],
-        },
-      ],
+      include: getConversationInclude(userId),
     });
 
-    return [...groups, ...privates].map((conversation) =>
-      populateMessageStatusField(conversation, userId),
-    );
+    return [...groups, ...privates].map((conversation) => {
+      conversation.set(
+        'messages',
+        conversation.messages.filter((m) => {
+          if (!m.messageUsers.length) {
+            return true;
+          }
+          return m.messageUsers[0].messageStatus !== 'deleted';
+        }),
+        {
+          raw: true,
+        },
+      );
+      return populateMessageStatusField(conversation, userId);
+    });
   }
 
   async findOneById({ id, userId }: { id: number; userId: number }) {
-    const group = await this.conversationModel.findOne({
-      where: {
-        id,
-        type: 'group',
-      },
-      include: [
-        {
-          model: User,
-          attributes: userReturnAttributes,
-        },
-        {
-          model: Message,
-          include: [
-            {
-              model: User,
-              attributes: userReturnAttributes,
-            },
-            {
-              model: MessageRecipient,
-              attributes: ['messageStatus'],
-              required: false,
-              where: {
-                recipientId: userId,
-              },
-            },
-          ],
-        },
-      ],
-    });
+    return this.getConversation(id, userId);
+    // const group = await this.conversationModel.findOne({
+    //   where: {
+    //     id,
+    //     type: 'group',
+    //   },
+    //   include: getConversationInclude(userId),
+    // });
 
-    if (group) {
-      populateMessageStatusField(group, userId);
-      return group;
-    }
+    // if (group) {
+    //   populateMessageStatusField(group, userId);
+    //   return group;
+    // }
 
-    const privateConversation = await this.conversationModel.findOne({
-      where: {
-        id,
-        type: 'private',
-      },
-      include: [
-        {
-          model: User,
-          attributes: userReturnAttributes,
-        },
-        {
-          model: Message,
-          include: [
-            {
-              model: User,
-              attributes: userReturnAttributes,
-            },
-            {
-              model: MessageRecipient,
-              attributes: ['messageStatus'],
-              required: false,
-              where: {
-                recipientId: userId,
-              },
-            },
-          ],
-        },
-      ],
-    });
+    // const privateConversation = await this.conversationModel.findOne({
+    //   where: {
+    //     id,
+    //     type: 'private',
+    //   },
+    //   include: getConversationInclude(userId),
+    // });
+    // populateMessageStatusField(privateConversation, userId);
 
-    populateMessageStatusField(privateConversation, userId);
-    return privateConversation;
+    // return privateConversation;
   }
 
   async findPrivateByUserIds(userId: number, participantIds: [number, number]) {
@@ -360,6 +278,7 @@ export class ConversationService {
         {
           model: User,
           where: {
+            // This part is different from normal get conversation case
             id: participantIds,
           },
           attributes: userReturnAttributes,
@@ -372,7 +291,7 @@ export class ConversationService {
               attributes: userReturnAttributes,
             },
             {
-              model: MessageRecipient,
+              model: MessageUser,
               attributes: ['messageStatus'],
               required: false,
               where: {
@@ -387,11 +306,25 @@ export class ConversationService {
     return conversation;
   }
 
-  update(id: number, updateConversationDto: UpdateConversationDto) {
-    return `This action updates a #${id} conversation`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} conversation`;
+  async remove({ id, userId }: { id: number; userId: number }) {
+    await this.conversationUserModel.update(
+      { deleted: true },
+      {
+        where: {
+          conversationId: id,
+          userId,
+        },
+      },
+    );
+    const messages = await this.messageModel.findAll({
+      where: {
+        conversationId: id,
+      },
+    });
+    return Promise.all(
+      messages.map(async (message) =>
+        this.messageService.softDelete({ messageId: message.id, userId }),
+      ),
+    );
   }
 }

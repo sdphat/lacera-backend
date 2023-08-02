@@ -4,7 +4,7 @@ import { Seeder } from 'nestjs-seeder';
 import { Conversation } from './models/conversation.model';
 import { ConversationUser } from './models/conversation-user.model';
 import { Message } from './models/message.model';
-import { MessageRecipient } from './models/message-recipient.model';
+import { MessageUser } from './models/message-recipient.model';
 
 @Injectable()
 export class ConversationsSeeder implements Seeder {
@@ -12,7 +12,7 @@ export class ConversationsSeeder implements Seeder {
     @InjectModel(ConversationUser) private readonly conversationUserModel: typeof ConversationUser,
     @InjectModel(Conversation) private readonly conversationModel: typeof Conversation,
     @InjectModel(Message) private readonly messageModel: typeof Message,
-    @InjectModel(MessageRecipient) private readonly messageUserModel: typeof MessageRecipient,
+    @InjectModel(MessageUser) private readonly messageUserModel: typeof MessageUser,
   ) {}
   async seed(): Promise<any> {
     const privateConv = await this.conversationModel.create({ type: 'private' });

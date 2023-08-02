@@ -4,7 +4,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Message } from './models/message.model';
 import { User } from '../user/models/user.model';
 import { Conversation } from '../conversation/models/conversation.model';
-import { MessageRecipient } from './models/message-recipient.model';
+import { MessageUser } from './models/message-recipient.model';
 
 const userReturnAttributes = ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl', 'online'];
 
@@ -14,7 +14,7 @@ export class MessageService {
     @InjectModel(Message) private readonly messageModel: typeof Message,
     @InjectModel(User) private readonly userModel: typeof User,
     @InjectModel(Conversation) private readonly conversationModel: typeof Conversation,
-    @InjectModel(MessageRecipient) private readonly messageRecipientModel: typeof MessageRecipient,
+    @InjectModel(MessageUser) private readonly messageUserModel: typeof MessageUser,
   ) {}
   async create({ userId, content, conversationId, postDate }: CreateMessageServiceDto) {
     const conversation = await this.conversationModel.findByPk(conversationId);
@@ -39,7 +39,7 @@ export class MessageService {
   }
 
   async updateMessageStatus({ userId, messageId }: { userId: number; messageId: number }) {
-    await this.messageRecipientModel.findOrCreate({
+    await this.messageUserModel.findOrCreate({
       where: {
         recipientId: userId,
         messageId,
@@ -47,15 +47,27 @@ export class MessageService {
     });
   }
 
-  findAll() {
-    return `This action returns all message`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} message`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} message`;
+  async softDelete({ messageId, userId }: { messageId: number; userId: number }) {
+    this.messageUserModel.upsert({
+      recipientId: userId,
+      messageId: messageId,
+      messageStatus: 'deleted',
+    });
+    // const messageUser = await this.messageUserModel.findOne({
+    //   where: {
+    //     userId: userId,
+    //     messageId: messageId,
+    //   },
+    // });
+    // if (messageUser) {
+    //   messageUser.messageStatus = 'deleted';
+    //   await messageUser.save();
+    // } else {
+    //   await this.messageUserModel.create({
+    //     userId,
+    //     messageId: messageId,
+    //     messageStatus: 'deleted',
+    //   });
+    // }
   }
 }

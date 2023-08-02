@@ -1,21 +1,23 @@
-import { BelongsTo, Column, ForeignKey, Model, Table } from 'sequelize-typescript';
+import { BelongsTo, Column, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { Message } from './message.model';
 import { User } from '../../user/models/user.model';
 
-export type RecipientMessageStatus = 'seen' | 'deleted';
+export type MessageUserStatus = 'seen' | 'deleted';
 
 @Table
-export class MessageRecipient extends Model {
-  @ForeignKey(() => Message)
+export class MessageUser extends Model {
+  @PrimaryKey
   @BelongsTo(() => Message, { as: 'message' })
+  @ForeignKey(() => Message)
   @Column
   messageId: number;
 
-  @ForeignKey(() => User)
+  @PrimaryKey
   @BelongsTo(() => User, { as: 'recipient' })
+  @ForeignKey(() => User)
   @Column
   recipientId: number;
 
   @Column({ defaultValue: 'seen' })
-  messageStatus: RecipientMessageStatus;
+  messageStatus: MessageUserStatus;
 }

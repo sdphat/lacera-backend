@@ -18,25 +18,6 @@ import { MessageService } from './message.service';
 
 const userReturnAttributes = ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl', 'online'];
 
-/**
- * Inline adding message status field to every messages in provided conversation
- * @param conversation Conversation, messages is required to be loaded first
- * @param userId Issued user id
- * @returns Modified conversation
- */
-const populateMessageStatusField = (conversation: Conversation, userId: number) => {
-  conversation.messages.forEach((message) => {
-    // If the user is on recipient side
-    // then update the message status to match with that side.
-    if (userId !== message.senderId) {
-      const recipientMessageStatus =
-        message.messageUsers.length > 0 ? message.messageUsers[0].messageStatus : 'received';
-      message.status = recipientMessageStatus;
-    }
-  });
-  return conversation;
-};
-
 const getConversationInclude = (userId: number): Includeable[] => [
   {
     model: User,
@@ -60,10 +41,13 @@ const getConversationInclude = (userId: number): Includeable[] => [
       {
         model: MessageUser,
         required: false,
-        attributes: ['messageStatus'],
-        where: {
-          recipientId: userId,
-        },
+        attributes: ['recipientId', 'messageStatus'],
+        // where: {
+        //   [Op.not]: {
+        //     recipientId: userId,
+        //     messageStatus: 'deleted',
+        //   },
+        // },
       },
     ],
     order: [['createdAt', 'ASC']],
@@ -95,16 +79,23 @@ export class ConversationService {
     conversation.set(
       'messages',
       conversation.messages.filter((m) => {
-        if (!m.messageUsers.length) {
+        // Add to list if user hasn't received message
+        if (
+          !m.messageUsers.length ||
+          m.messageUsers.every(({ recipientId }) => recipientId !== userId)
+        ) {
           return true;
         }
-        return m.messageUsers[0].messageStatus !== 'deleted';
+        // Add to list if user's message hasn't been deleted
+        return m.messageUsers.some(
+          ({ recipientId, messageStatus }) => recipientId === userId && messageStatus !== 'deleted',
+        );
       }),
       {
         raw: true,
       },
     );
-    return populateMessageStatusField(conversation, userId);
+    return conversation;
   }
 
   async findOrCreatePrivate({
@@ -229,44 +220,29 @@ export class ConversationService {
       conversation.set(
         'messages',
         conversation.messages.filter((m) => {
-          if (!m.messageUsers.length) {
+          // Add to list if user hasn't received message
+          if (
+            !m.messageUsers.length ||
+            !m.messageUsers.find(({ recipientId }) => recipientId === userId)
+          ) {
             return true;
           }
-          return m.messageUsers[0].messageStatus !== 'deleted';
+          // Add to list if user's message hasn't been deleted
+          return m.messageUsers.some(
+            ({ recipientId, messageStatus }) =>
+              recipientId === userId && messageStatus !== 'deleted',
+          );
         }),
         {
           raw: true,
         },
       );
-      return populateMessageStatusField(conversation, userId);
+      return conversation;
     });
   }
 
   async findOneById({ id, userId }: { id: number; userId: number }) {
     return this.getConversation(id, userId);
-    // const group = await this.conversationModel.findOne({
-    //   where: {
-    //     id,
-    //     type: 'group',
-    //   },
-    //   include: getConversationInclude(userId),
-    // });
-
-    // if (group) {
-    //   populateMessageStatusField(group, userId);
-    //   return group;
-    // }
-
-    // const privateConversation = await this.conversationModel.findOne({
-    //   where: {
-    //     id,
-    //     type: 'private',
-    //   },
-    //   include: getConversationInclude(userId),
-    // });
-    // populateMessageStatusField(privateConversation, userId);
-
-    // return privateConversation;
   }
 
   async findPrivateByUserIds(userId: number, participantIds: [number, number]) {
@@ -292,17 +268,19 @@ export class ConversationService {
             },
             {
               model: MessageUser,
-              attributes: ['messageStatus'],
               required: false,
-              where: {
-                recipientId: userId,
-              },
+              attributes: ['recipientId', 'messageStatus'],
+              // where: {
+              //   [Op.not]: {
+              //     recipientId: userId,
+              //     messageStatus: 'deleted',
+              //   },
+              // },
             },
           ],
         },
       ],
     });
-    populateMessageStatusField(conversation, userId);
     return conversation;
   }
 

@@ -12,7 +12,6 @@ const userReturnAttributes = ['id', 'firstName', 'lastName', 'lastActive', 'avat
 export class MessageService {
   constructor(
     @InjectModel(Message) private readonly messageModel: typeof Message,
-    @InjectModel(User) private readonly userModel: typeof User,
     @InjectModel(Conversation) private readonly conversationModel: typeof Conversation,
     @InjectModel(MessageUser) private readonly messageUserModel: typeof MessageUser,
   ) {}

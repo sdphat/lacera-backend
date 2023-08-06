@@ -22,7 +22,7 @@ import { CreateGroupConversationDto } from './dto/create-group-conversation.dto'
 import { UsersService } from '../user/users.service';
 import { UpdateMessageStatusDto } from './dto/update-message-status.dto';
 import { RemoveConversationDto } from './dto/remove-conversation.dto';
-import { RemoveMessageDto } from "./dto/remove-message.dto";
+import { RemoveMessageDto } from './dto/remove-message.dto';
 
 @Public()
 @WebSocketGateway({ namespace: 'conversation', cors: { origin: '*' } })
@@ -191,7 +191,7 @@ export class ConversationGateway extends AuthGateway {
 
   @ExtendedSubscribeMessage('softRemoveMessage')
   @UseGuards(WsAccessTokenGuard)
-  async removeMessage(
+  async softRemoveMessage(
     @ConnectedSocket() client: ExtendedSocket,
     @MessageBody() { messageId }: RemoveMessageDto,
   ) {
@@ -201,5 +201,19 @@ export class ConversationGateway extends AuthGateway {
 
     await this.messageService.softDelete({ messageId, userId: client.user.id });
     return { data: true };
+  }
+
+  @ExtendedSubscribeMessage('removeMessage')
+  @UseGuards()
+  async removeMessage(
+    @ConnectedSocket() client: ExtendedSocket,
+    @MessageBody() { messageId }: RemoveMessageDto,
+  ) {
+    if (!client.user) {
+      return { error: UNAUTHORIZED_ERROR };
+    }
+
+    const updatedMessage = await this.messageService.delete({ messageId, userId: client.user.id });
+    return { data: updatedMessage };
   }
 }

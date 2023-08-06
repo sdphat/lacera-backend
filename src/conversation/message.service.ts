@@ -5,6 +5,7 @@ import { Message } from './models/message.model';
 import { User } from '../user/models/user.model';
 import { Conversation } from '../conversation/models/conversation.model';
 import { MessageUser } from './models/message-recipient.model';
+import { RETRIEVED_MESSAGE_SYSTEM_NOTIFICATION, SYSTEM_USER_ID } from 'src/constants';
 
 const userReturnAttributes = ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl', 'online'];
 
@@ -52,21 +53,27 @@ export class MessageService {
       messageId: messageId,
       messageStatus: 'deleted',
     });
-    // const messageUser = await this.messageUserModel.findOne({
-    //   where: {
-    //     userId: userId,
-    //     messageId: messageId,
-    //   },
-    // });
-    // if (messageUser) {
-    //   messageUser.messageStatus = 'deleted';
-    //   await messageUser.save();
-    // } else {
-    //   await this.messageUserModel.create({
-    //     userId,
-    //     messageId: messageId,
-    //     messageStatus: 'deleted',
-    //   });
-    // }
+  }
+
+  async delete({ messageId, userId }: { messageId: number; userId: number }) {
+    const foundMessage = await this.messageModel.findOne({
+      where: {
+        id: messageId,
+        senderId: userId,
+      },
+      include: [
+        {
+          model: User,
+          attributes: userReturnAttributes,
+        },
+      ],
+    });
+    if (foundMessage) {
+      foundMessage.content = RETRIEVED_MESSAGE_SYSTEM_NOTIFICATION;
+      foundMessage.status = 'deleted';
+      await foundMessage.save();
+      return foundMessage;
+    }
+    return null;
   }
 }

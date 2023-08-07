@@ -56,7 +56,7 @@ export class ConversationGateway extends AuthGateway {
         userId: client.user.id,
       });
       const participantIds = conversation.participants.map((p) => p.id);
-      client.emit('update', message);
+      client.emit('create', message);
       participantIds.forEach((id) => client.to(`users/${id}`).emit('update', message));
       return { data: message };
     } catch (ex) {
@@ -172,6 +172,14 @@ export class ConversationGateway extends AuthGateway {
     }
 
     await this.messageService.updateMessageStatus({ messageId, userId: client.user.id });
+    const message = await this.messageService.findOneById({ messageId });
+    const conv = await this.conversationService.findOneById({
+      userId: client.user.id,
+      id: message.conversationId,
+    });
+    conv.participants.forEach((participant) =>
+      client.to(`users/${participant.id}`).emit('update', message),
+    );
     return { data: true };
   }
 
@@ -214,6 +222,13 @@ export class ConversationGateway extends AuthGateway {
     }
 
     const updatedMessage = await this.messageService.delete({ messageId, userId: client.user.id });
+    const conv = await this.conversationService.findOneById({
+      userId: client.user.id,
+      id: updatedMessage.conversationId,
+    });
+    conv.participants.forEach((participant) =>
+      client.to(`users/${participant.id}`).emit('update', updatedMessage),
+    );
     return { data: updatedMessage };
   }
 }

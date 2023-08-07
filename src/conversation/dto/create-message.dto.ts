@@ -1,4 +1,5 @@
 export class CreateMessageDto {
+  tempMessageId: number;
   conversationId: number;
   // reactions: Partial<Record<ReactionType, number>>;
   content: string;

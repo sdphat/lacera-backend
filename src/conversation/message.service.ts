@@ -31,11 +31,32 @@ export class MessageService {
             model: User,
             attributes: userReturnAttributes,
           },
+          {
+            model: MessageUser,
+            required: false,
+            attributes: ['recipientId', 'messageStatus'],
+          },
         ],
       });
     } else {
       throw new Error('No conversation found');
     }
+  }
+
+  async findOneById({ messageId }: { messageId: number }) {
+    return this.messageModel.findByPk(messageId, {
+      include: [
+        {
+          model: User,
+          attributes: userReturnAttributes,
+        },
+        {
+          model: MessageUser,
+          required: false,
+          attributes: ['recipientId', 'messageStatus'],
+        },
+      ],
+    });
   }
 
   async updateMessageStatus({ userId, messageId }: { userId: number; messageId: number }) {
@@ -66,8 +87,14 @@ export class MessageService {
           model: User,
           attributes: userReturnAttributes,
         },
+        {
+          model: MessageUser,
+          required: false,
+          attributes: ['recipientId', 'messageStatus'],
+        },
       ],
     });
+
     if (foundMessage) {
       foundMessage.content = RETRIEVED_MESSAGE_SYSTEM_NOTIFICATION;
       foundMessage.status = 'deleted';

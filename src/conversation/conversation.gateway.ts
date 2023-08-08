@@ -173,13 +173,11 @@ export class ConversationGateway extends AuthGateway {
 
     await this.messageService.updateMessageStatus({ messageId, userId: client.user.id });
     const message = await this.messageService.findOneById({ messageId });
-    const conv = await this.conversationService.findOneById({
-      userId: client.user.id,
-      id: message.conversationId,
+    message.messageUsers.forEach((messageUser) => {
+      if (messageUser.messageStatus !== 'deleted') {
+        client.to(`users/${messageUser.recipientId}`).emit('update', message);
+      }
     });
-    conv.participants.forEach((participant) =>
-      client.to(`users/${participant.id}`).emit('update', message),
-    );
     return { data: true };
   }
 
@@ -222,13 +220,11 @@ export class ConversationGateway extends AuthGateway {
     }
 
     const updatedMessage = await this.messageService.delete({ messageId, userId: client.user.id });
-    const conv = await this.conversationService.findOneById({
-      userId: client.user.id,
-      id: updatedMessage.conversationId,
+    updatedMessage.messageUsers.forEach((messageUser) => {
+      if (messageUser.messageStatus !== 'deleted') {
+        client.to(`users/${messageUser.recipientId}`).emit('update', updatedMessage);
+      }
     });
-    conv.participants.forEach((participant) =>
-      client.to(`users/${participant.id}`).emit('update', updatedMessage),
-    );
     return { data: updatedMessage };
   }
 }

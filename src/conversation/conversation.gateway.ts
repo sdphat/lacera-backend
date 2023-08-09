@@ -173,10 +173,16 @@ export class ConversationGateway extends AuthGateway {
 
     await this.messageService.updateMessageStatus({ messageId, userId: client.user.id });
     const message = await this.messageService.findOneById({ messageId });
-    message.messageUsers.forEach((messageUser) => {
-      if (messageUser.messageStatus !== 'deleted') {
-        client.to(`users/${messageUser.recipientId}`).emit('update', message);
-      }
+    const ids = Array.from(
+      new Set([
+        ...message.messageUsers
+          .filter((mu) => mu.messageStatus !== 'deleted')
+          .map((mu) => mu.recipientId),
+        message.senderId,
+      ]),
+    );
+    ids.forEach((userId) => {
+      client.to(`users/${userId}`).emit('update', message);
     });
     return { data: true };
   }
@@ -220,10 +226,16 @@ export class ConversationGateway extends AuthGateway {
     }
 
     const updatedMessage = await this.messageService.delete({ messageId, userId: client.user.id });
-    updatedMessage.messageUsers.forEach((messageUser) => {
-      if (messageUser.messageStatus !== 'deleted') {
-        client.to(`users/${messageUser.recipientId}`).emit('update', updatedMessage);
-      }
+    const ids = Array.from(
+      new Set([
+        ...updatedMessage.messageUsers
+          .filter((mu) => mu.messageStatus !== 'deleted')
+          .map((mu) => mu.recipientId),
+        updatedMessage.senderId,
+      ]),
+    );
+    ids.forEach((userId) => {
+      client.to(`users/${userId}`).emit('update', updatedMessage);
     });
     return { data: updatedMessage };
   }

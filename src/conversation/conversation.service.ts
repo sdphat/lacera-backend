@@ -1,11 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { UpdateConversationDto } from './dto/update-conversation.dto';
 import { InjectModel } from '@nestjs/sequelize';
-import {
-  Conversation,
-  ConversationType,
-  GroupConversationAttributes,
-} from './models/conversation.model';
+import { Conversation, GroupConversationAttributes } from './models/conversation.model';
 import { User } from '../user/models/user.model';
 import { ConversationUser } from './models/conversation-user.model';
 import { ServiceFetchAllConversationsDto } from './dto/service-fetch-all-conversations.dto';
@@ -13,7 +8,7 @@ import { Message } from './models/message.model';
 import { CreateGroupConversationDto } from './dto/create-group-conversation.dto';
 import { Sequelize } from 'sequelize-typescript';
 import { MessageUser } from './models/message-recipient.model';
-import { Includeable, Op } from 'sequelize';
+import { Includeable } from 'sequelize';
 import { MessageService } from './message.service';
 
 const userReturnAttributes = ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl', 'online'];

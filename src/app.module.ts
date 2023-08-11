@@ -9,6 +9,7 @@ import { UsersModule } from './user/users.module';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { ConversationModule } from './conversation/conversation.module';
 import { ContactsModule } from './contacts/contacts.module';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { ContactsModule } from './contacts/contacts.module';
     UsersModule,
     ConversationModule,
     ContactsModule,
+    CacheModule.register({ isGlobal: true }),
   ],
   controllers: [AppController],
   providers: [

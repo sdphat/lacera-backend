@@ -13,17 +13,13 @@ export class UsersService {
     return this.userModel.create(createUserDto);
   }
 
-  findAll() {
-    return `This action returns all user`;
-  }
+  // async findAllConversation({ userId }: FindUserConversationsDto) {
+  //   const user = await this.userModel.findByPk(userId, {
+  //     include: [{ model: Conversation }],
+  //   });
 
-  async findAllConversation({ userId }: FindUserConversationsDto) {
-    const user = await this.userModel.findByPk(userId, {
-      include: [{ model: Conversation }],
-    });
-
-    return user;
-  }
+  //   return user;
+  // }
 
   async findOneById(id: number) {
     return this.userModel.findByPk(id);
@@ -33,7 +29,7 @@ export class UsersService {
     return this.userModel.findOne({ where: { phoneNumber } });
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
+  async update(id: number, updateUserDto: UpdateUserDto) {
     return this.userModel.update(updateUserDto, {
       where: {
         id,

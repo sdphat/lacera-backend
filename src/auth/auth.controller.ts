@@ -1,16 +1,30 @@
-import { Controller, Post, Body, Res, HttpStatus, HttpCode, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Res,
+  HttpStatus,
+  HttpCode,
+  Req,
+  UseGuards,
+  Inject,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { Response } from 'express';
 import { Public } from './accessToken.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from '../user/users.service';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import { makeUserRedisOnlineKey } from 'src/constants';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   @Public()
@@ -31,6 +45,9 @@ export class AuthController {
       response.statusCode = 400;
       return result;
     }
+    if (!('error' in result)) {
+      await this.cacheManager.set(makeUserRedisOnlineKey(result.id), true, 5000);
+    }
     return result;
   }
 
@@ -44,5 +61,6 @@ export class AuthController {
     } catch (ex) {
       console.log(ex);
     }
+    await this.cacheManager.del(makeUserRedisOnlineKey(user.userId));
   }
 }

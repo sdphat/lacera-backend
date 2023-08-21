@@ -11,13 +11,20 @@ import { ConfigModule } from '@nestjs/config';
 import { Message } from './models/message.model';
 import { MessageService } from './message.service';
 import { MessageUser } from './models/message-recipient.model';
+import { MessageReaction } from './models/message-reaction.model';
 
 @Module({
   imports: [
     JwtModule.register({}),
     ConfigModule,
     UsersModule,
-    SequelizeModule.forFeature([Conversation, ConversationUser, Message, MessageUser]),
+    SequelizeModule.forFeature([
+      Conversation,
+      ConversationUser,
+      Message,
+      MessageUser,
+      MessageReaction,
+    ]),
   ],
   providers: [ConversationService, UsersService, ConversationGateway, MessageService],
   exports: [SequelizeModule],

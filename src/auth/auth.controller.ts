@@ -17,7 +17,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from '../user/users.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { makeUserRedisOnlineKey } from 'src/constants';
+import { makeUserRedisOnlineKey } from '../utils';
 
 @Controller('auth')
 export class AuthController {

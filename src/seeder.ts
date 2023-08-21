@@ -7,6 +7,7 @@ import { ConversationModule } from './conversation/conversation.module';
 import { ConversationsSeeder } from './conversation/conversation.seeder';
 import { ContactsModule } from './contacts/contacts.module';
 import { ContactsSeeder } from './contacts/contacts.seeder';
+import { CacheModule } from '@nestjs/cache-manager';
 
 seeder({
   imports: [
@@ -34,5 +35,6 @@ seeder({
     UsersModule,
     ConversationModule,
     ContactsModule,
+    CacheModule.register({ isGlobal: true }),
   ],
 }).run([UsersSeeder, ConversationsSeeder, ContactsSeeder]);

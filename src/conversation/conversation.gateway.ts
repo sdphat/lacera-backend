@@ -1,6 +1,6 @@
 import { UseGuards } from '@nestjs/common';
 import { ConnectedSocket, MessageBody, WebSocketGateway } from '@nestjs/websockets';
-import { ExtendedSocket, ExtendedSubscribeMessage } from '../SocketUtils';
+import { ExtendedSocket, ExtendedSubscribeMessage, makeUserRoomId } from '../SocketUtils';
 import { UNAUTHORIZED_ERROR, WsAccessTokenGuard } from '../auth/wsAccessToken.guard';
 import { Public } from '../auth/accessToken.guard';
 import { ConversationService } from './conversation.service';
@@ -23,6 +23,26 @@ import { UsersService } from '../user/users.service';
 import { UpdateMessageStatusDto } from './dto/update-message-status.dto';
 import { RemoveConversationDto } from './dto/remove-conversation.dto';
 import { RemoveMessageDto } from './dto/remove-message.dto';
+import { ReactMessageDto } from './dto/react-message.dto';
+import { Socket } from 'socket.io';
+
+/**
+ * Emit message to every user that hasn't deleted that message via 'update' event
+ * @param message Instance of message model. 'messageUsers' fields must be included.
+ */
+function emitUpdateMessageToValidUsers(message: Message, client: Socket) {
+  const ids = Array.from(
+    new Set([
+      ...message.messageUsers
+        .filter((mu) => mu.messageStatus !== 'deleted')
+        .map((mu) => mu.recipientId),
+      message.senderId,
+    ]),
+  );
+  ids.forEach((userId) => {
+    client.to(makeUserRoomId(userId)).emit('update', message);
+  });
+}
 
 @Public()
 @WebSocketGateway({ namespace: 'conversation', cors: { origin: '*' } })
@@ -173,17 +193,7 @@ export class ConversationGateway extends AuthGateway {
 
     await this.messageService.updateMessageStatus({ messageId, userId: client.user.id });
     const message = await this.messageService.findOneById({ messageId });
-    const ids = Array.from(
-      new Set([
-        ...message.messageUsers
-          .filter((mu) => mu.messageStatus !== 'deleted')
-          .map((mu) => mu.recipientId),
-        message.senderId,
-      ]),
-    );
-    ids.forEach((userId) => {
-      client.to(`users/${userId}`).emit('update', message);
-    });
+    emitUpdateMessageToValidUsers(message, client);
     return { data: true };
   }
 
@@ -226,17 +236,28 @@ export class ConversationGateway extends AuthGateway {
     }
 
     const updatedMessage = await this.messageService.delete({ messageId, userId: client.user.id });
-    const ids = Array.from(
-      new Set([
-        ...updatedMessage.messageUsers
-          .filter((mu) => mu.messageStatus !== 'deleted')
-          .map((mu) => mu.recipientId),
-        updatedMessage.senderId,
-      ]),
-    );
-    ids.forEach((userId) => {
-      client.to(`users/${userId}`).emit('update', updatedMessage);
-    });
+    emitUpdateMessageToValidUsers(updatedMessage, client);
     return { data: updatedMessage };
+  }
+
+  @ExtendedSubscribeMessage('reactMessage')
+  @UseGuards()
+  async reactToMessage(
+    @ConnectedSocket() client: ExtendedSocket,
+    @MessageBody() { messageId, reactionType }: ReactMessageDto,
+  ) {
+    if (!client.user) {
+      return { error: UNAUTHORIZED_ERROR };
+    }
+
+    const message = await this.messageService.react({
+      messageId,
+      userId: client.user.id,
+      reactionType,
+    });
+
+    emitUpdateMessageToValidUsers(message, client);
+
+    return { data: message };
   }
 }

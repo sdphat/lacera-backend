@@ -5,7 +5,8 @@ import { Message } from './models/message.model';
 import { User } from '../user/models/user.model';
 import { Conversation } from '../conversation/models/conversation.model';
 import { MessageUser } from './models/message-recipient.model';
-import { RETRIEVED_MESSAGE_SYSTEM_NOTIFICATION, SYSTEM_USER_ID } from 'src/constants';
+import { RETRIEVED_MESSAGE_SYSTEM_NOTIFICATION } from '../constants';
+import { MessageReaction, ReactionType } from './models/message-reaction.model';
 
 const userReturnAttributes = ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl', 'online'];
 
@@ -15,6 +16,7 @@ export class MessageService {
     @InjectModel(Message) private readonly messageModel: typeof Message,
     @InjectModel(Conversation) private readonly conversationModel: typeof Conversation,
     @InjectModel(MessageUser) private readonly messageUserModel: typeof MessageUser,
+    @InjectModel(MessageReaction) private readonly messageReactionModel: typeof MessageReaction,
   ) {}
   async create({ userId, content, conversationId, postDate }: CreateMessageServiceDto) {
     const conversation = await this.conversationModel.findByPk(conversationId);
@@ -36,6 +38,11 @@ export class MessageService {
             required: false,
             attributes: ['recipientId', 'messageStatus'],
           },
+          {
+            model: MessageReaction,
+            required: false,
+            attributes: ['type', 'userId'],
+          },
         ],
       });
     } else {
@@ -54,6 +61,10 @@ export class MessageService {
           model: MessageUser,
           required: false,
           attributes: ['recipientId', 'messageStatus'],
+        },
+        {
+          model: MessageReaction,
+          required: false,
         },
       ],
     });
@@ -102,5 +113,37 @@ export class MessageService {
       return foundMessage;
     }
     return null;
+  }
+
+  async react({
+    messageId,
+    userId,
+    reactionType,
+  }: {
+    messageId: number;
+    userId: number;
+    reactionType: ReactionType;
+  }) {
+    const message = await this.findOneById({ messageId });
+    const messageReaction = message.reactions.find(
+      (messageReaction) =>
+        messageReaction.userId === userId && messageReaction.type === reactionType,
+    );
+
+    if (messageReaction) {
+      const reactionId = messageReaction.id;
+      await messageReaction.destroy();
+      message.reactions = message.reactions.filter((mr) => mr.id !== reactionId);
+      message.set('reactions', message.reactions);
+    } else {
+      const newMessageReaction = await this.messageReactionModel.create({
+        messageId,
+        userId,
+        type: reactionType,
+      });
+      message.reactions.push(newMessageReaction);
+    }
+
+    return message;
   }
 }

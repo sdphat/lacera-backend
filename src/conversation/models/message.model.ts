@@ -2,6 +2,7 @@ import { Column, Model, ForeignKey, BelongsTo, Table, HasMany } from 'sequelize-
 import { Conversation } from '../models/conversation.model';
 import { User } from '../../user/models/user.model';
 import { MessageUser } from './message-recipient.model';
+import { MessageReaction } from './message-reaction.model';
 
 export type MessageStatus = 'received' | 'deleted';
 
@@ -21,6 +22,9 @@ export class Message extends Model {
 
   @BelongsTo(() => Conversation)
   conversation: Conversation;
+
+  @HasMany(() => MessageReaction)
+  reactions: MessageReaction[];
 
   @Column
   content: string;

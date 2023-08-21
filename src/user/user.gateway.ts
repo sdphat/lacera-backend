@@ -9,7 +9,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Inject, UseGuards } from '@nestjs/common';
 import { CheckHeartbeatDto } from './dto/check-heartbeat.dto';
-import { makeUserRedisOnlineKey } from 'src/constants';
+import { makeUserRedisOnlineKey } from '../utils';
 
 @WebSocketGateway({ namespace: 'user', cors: { origin: '*' } })
 export class UserGateway extends AuthGateway {

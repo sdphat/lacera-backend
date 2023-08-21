@@ -28,3 +28,5 @@ export const ExtendedSubscribeMessage = (message: string, errorEvent?: string): 
     errorEventDecorator(target, propertyKey, descriptor);
   };
 };
+
+export const makeUserRoomId = (userId: number) => `users/${userId}`;

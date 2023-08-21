@@ -10,6 +10,7 @@ import { Sequelize } from 'sequelize-typescript';
 import { MessageUser } from './models/message-recipient.model';
 import { Includeable } from 'sequelize';
 import { MessageService } from './message.service';
+import { MessageReaction } from './models/message-reaction.model';
 
 const userReturnAttributes = ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl', 'online'];
 
@@ -44,8 +45,12 @@ const getConversationInclude = (userId: number): Includeable[] => [
         //   },
         // },
       },
+      {
+        model: MessageReaction,
+        required: false,
+      },
     ],
-    order: [['createdAt', 'ASC']],
+    order: [['id', 'ASC']],
   },
 ];
 
@@ -212,26 +217,23 @@ export class ConversationService {
     });
 
     return [...groups, ...privates].map((conversation) => {
-      conversation.set(
-        'messages',
-        conversation.messages.filter((m) => {
-          // Add to list if user hasn't received message
-          if (
-            !m.messageUsers.length ||
-            !m.messageUsers.find(({ recipientId }) => recipientId === userId)
-          ) {
-            return true;
-          }
-          // Add to list if user's message hasn't been deleted
-          return m.messageUsers.some(
-            ({ recipientId, messageStatus }) =>
-              recipientId === userId && messageStatus !== 'deleted',
-          );
-        }),
-        {
-          raw: true,
-        },
-      );
+      const filteredMessage = conversation.messages.filter((m) => {
+        // Add to list if user hasn't received message
+        if (
+          !m.messageUsers.length ||
+          !m.messageUsers.find(({ recipientId }) => recipientId === userId)
+        ) {
+          return true;
+        }
+        // Add to list if user's message hasn't been deleted
+        return m.messageUsers.some(
+          ({ recipientId, messageStatus }) => recipientId === userId && messageStatus !== 'deleted',
+        );
+      });
+      filteredMessage.sort((m1, m2) => m1.id - m2.id);
+      conversation.set('messages', filteredMessage, {
+        raw: true,
+      });
       return conversation;
     });
   }
@@ -265,12 +267,10 @@ export class ConversationService {
               model: MessageUser,
               required: false,
               attributes: ['recipientId', 'messageStatus'],
-              // where: {
-              //   [Op.not]: {
-              //     recipientId: userId,
-              //     messageStatus: 'deleted',
-              //   },
-              // },
+            },
+            {
+              model: MessageReaction,
+              required: false,
             },
           ],
         },

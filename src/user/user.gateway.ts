@@ -30,6 +30,7 @@ export class UserGateway extends AuthGateway {
     }
 
     await this.cacheManager.set(makeUserRedisOnlineKey(client.user.id), true, 5000);
+    await this.usersService.update(client.user.id, { lastActive: new Date() });
   }
 
   // Check user's heartbeat
@@ -37,11 +38,17 @@ export class UserGateway extends AuthGateway {
   async checkHeartbeat(@MessageBody() { userId }: CheckHeartbeatDto) {
     const isOnline =
       (await this.cacheManager.get<boolean>(makeUserRedisOnlineKey(userId))) ?? false;
-    return {
-      data: {
-        isOnline,
-        userId,
-      },
-    };
+    console.log({ userId, isOnline });
+    if (!isOnline) {
+      const { lastActive } = await this.usersService.findOneById(userId);
+      return { data: { isOnline, userId, lastActive } };
+    } else {
+      return {
+        data: {
+          isOnline,
+          userId,
+        },
+      };
+    }
   }
 }

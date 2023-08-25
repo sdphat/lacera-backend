@@ -38,7 +38,7 @@ export class User extends Model<UserAttributes, CreationalUserAttributes> {
   @Column
   lastActive: Date;
 
-  @Column
+  @Column({ defaultValue: '' })
   avatarUrl: string;
 
   @Column

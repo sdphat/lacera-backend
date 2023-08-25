@@ -18,6 +18,7 @@ import { UsersService } from '../user/users.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { makeUserRedisOnlineKey } from '../utils';
+import { RegisterDto } from './dto/register.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -47,6 +48,18 @@ export class AuthController {
     }
     if (!('error' in result)) {
       await this.cacheManager.set(makeUserRedisOnlineKey(result.id), true, 5000);
+    }
+    return result;
+  }
+
+  @Public()
+  @Post('register')
+  @HttpCode(HttpStatus.OK)
+  async register(@Body() registerDto: RegisterDto, @Res({ passthrough: true }) response: Response) {
+    const result = await this.authService.register(registerDto);
+    if (result.error === 'existed') {
+      response.statusCode = 400;
+      return { error: 'existed' };
     }
     return result;
   }

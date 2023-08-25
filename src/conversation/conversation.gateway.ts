@@ -90,6 +90,7 @@ export class ConversationGateway extends AuthGateway {
     @MessageBody() { targetId }: CreatePrivateConversationDto,
     @ConnectedSocket() client: ExtendedSocket,
   ): Promise<{ data: PrivateConversationAttributes } | { error: string }> {
+    console.log('!!!!createPrivate!!!!!');
     if (!client.user) {
       return { error: UNAUTHORIZED_ERROR };
     }

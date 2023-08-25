@@ -6,6 +6,7 @@ import { RefreshAccessTokenDto } from './dto/refreshToken.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../user/users.service';
+import { RegisterDto } from './dto/register.dto';
 
 @Injectable()
 export class AuthService {
@@ -40,7 +41,6 @@ export class AuthService {
     }
 
     const isMatch = await compare(loginDto.password, foundUser.password);
-    const jwtFamilyId = randomUUID();
     if (isMatch) {
       return {
         id: foundUser.id,
@@ -49,7 +49,6 @@ export class AuthService {
         avatarUrl: foundUser.avatarUrl,
         refreshToken: await this.jwtService.signAsync(
           {
-            jwtId: jwtFamilyId,
             id: foundUser.id,
             phoneNumber: foundUser.phoneNumber,
             firstName: foundUser.firstName,
@@ -66,5 +65,38 @@ export class AuthService {
         error: 'mismatch',
       };
     }
+  }
+
+  async register(registerDto: RegisterDto) {
+    const foundUser = await this.usersService.findOneByPhoneNumber(registerDto.phoneNumber);
+    if (foundUser) {
+      return { error: 'existed' };
+    }
+
+    const newUser = await this.usersService.create({
+      phoneNumber: registerDto.phoneNumber,
+      password: registerDto.password,
+      firstName: registerDto.firstName,
+      lastName: registerDto.lastName,
+    });
+
+    return {
+      id: newUser.id,
+      firstName: newUser.firstName,
+      lastName: newUser.lastName,
+      avatarUrl: newUser.avatarUrl,
+      refreshToken: await this.jwtService.signAsync(
+        {
+          id: newUser.id,
+          phoneNumber: newUser.phoneNumber,
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+        },
+        {
+          secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
+          expiresIn: this.configService.get<string>('REFRESH_TOKEN_EXPIRE_DURATION'),
+        },
+      ),
+    };
   }
 }

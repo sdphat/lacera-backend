@@ -13,14 +13,6 @@ export class UsersService {
     return this.userModel.create(createUserDto);
   }
 
-  // async findAllConversation({ userId }: FindUserConversationsDto) {
-  //   const user = await this.userModel.findByPk(userId, {
-  //     include: [{ model: Conversation }],
-  //   });
-
-  //   return user;
-  // }
-
   async findOneById(id: number) {
     return this.userModel.findByPk(id);
   }

@@ -10,6 +10,7 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { ConversationModule } from './conversation/conversation.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { CacheModule } from '@nestjs/cache-manager';
+import { join } from 'path';
 
 @Module({
   imports: [

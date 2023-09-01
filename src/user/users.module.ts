@@ -7,10 +7,12 @@ import { ConfigService } from '@nestjs/config';
 import { Friend } from './models/friend.model';
 import { UserGateway } from './user.gateway';
 import { JwtModule } from '@nestjs/jwt';
+import { UserController } from './user.controller';
 
 @Module({
   imports: [SequelizeModule.forFeature([User, Friend]), JwtModule],
   providers: [UsersService, UsersSeeder, ConfigService, UserGateway],
   exports: [UsersService, SequelizeModule, UsersSeeder],
+  controllers: [UserController],
 })
 export class UsersModule {}

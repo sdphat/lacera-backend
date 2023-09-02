@@ -1,4 +1,4 @@
-import { Column, Model, ForeignKey, BelongsTo, Table, HasMany } from 'sequelize-typescript';
+import { Column, Model, ForeignKey, BelongsTo, Table, HasMany, HasOne } from 'sequelize-typescript';
 import { Conversation } from '../models/conversation.model';
 import { User } from '../../user/models/user.model';
 import { MessageUser } from './message-recipient.model';
@@ -31,6 +31,12 @@ export class Message extends Model {
 
   @Column
   createdAt: Date;
+
+  @Column
+  replyToId: number;
+
+  @BelongsTo(() => Message, { foreignKey: 'replyToId', as: 'replyTo' })
+  replyTo: Message;
 
   @Column({
     set(_deletedAt?: Date) {

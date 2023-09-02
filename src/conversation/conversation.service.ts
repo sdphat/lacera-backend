@@ -49,6 +49,16 @@ const getConversationInclude = (userId: number): Includeable[] => [
         model: MessageReaction,
         required: false,
       },
+      {
+        model: Message,
+        as: 'replyTo',
+        include: [
+          {
+            model: User,
+            attributes: ['firstName', 'lastName'],
+          },
+        ],
+      },
     ],
     order: [['id', 'ASC']],
   },
@@ -272,6 +282,16 @@ export class ConversationService {
               model: MessageReaction,
               required: false,
             },
+            // {
+            //   model: Message,
+            //   as: 'replyTo',
+            //   include: [
+            //     {
+            //       model: User,
+            //       attributes: userReturnAttributes,
+            //     },
+            //   ],
+            // },
           ],
         },
       ],

@@ -1,9 +1,9 @@
 export class CreateMessageDto {
   tempMessageId: number;
   conversationId: number;
-  // reactions: Partial<Record<ReactionType, number>>;
   content: string;
   postDate: string;
+  replyTo?: number;
 }
 
 export class CreateMessageServiceDto extends CreateMessageDto {

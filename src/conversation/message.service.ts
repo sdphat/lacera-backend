@@ -18,7 +18,7 @@ export class MessageService {
     @InjectModel(MessageUser) private readonly messageUserModel: typeof MessageUser,
     @InjectModel(MessageReaction) private readonly messageReactionModel: typeof MessageReaction,
   ) {}
-  async create({ userId, content, conversationId, postDate }: CreateMessageServiceDto) {
+  async create({ userId, content, conversationId, postDate, replyTo }: CreateMessageServiceDto) {
     const conversation = await this.conversationModel.findByPk(conversationId);
     if (conversation) {
       const { id } = await this.messageModel.create({
@@ -26,6 +26,7 @@ export class MessageService {
         conversationId,
         createdAt: postDate,
         content,
+        replyToId: replyTo,
       });
       return this.messageModel.findByPk(id, {
         include: [
@@ -42,6 +43,16 @@ export class MessageService {
             model: MessageReaction,
             required: false,
             attributes: ['type', 'userId'],
+          },
+          {
+            model: Message,
+            as: 'replyTo',
+            include: [
+              {
+                model: User,
+                attributes: ['firstName', 'lastName'],
+              },
+            ],
           },
         ],
       });
@@ -65,6 +76,16 @@ export class MessageService {
         {
           model: MessageReaction,
           required: false,
+        },
+        {
+          model: Message,
+          as: 'replyTo',
+          include: [
+            {
+              model: User,
+              attributes: ['firstName', 'lastName'],
+            },
+          ],
         },
       ],
     });

@@ -1,4 +1,4 @@
-import { Column, Model, ForeignKey, BelongsTo, Table, HasMany, HasOne } from 'sequelize-typescript';
+import { Column, Model, ForeignKey, BelongsTo, Table, HasMany } from 'sequelize-typescript';
 import { Conversation } from '../models/conversation.model';
 import { User } from '../../user/models/user.model';
 import { MessageUser } from './message-recipient.model';
@@ -6,8 +6,13 @@ import { MessageReaction } from './message-reaction.model';
 
 export type MessageStatus = 'received' | 'deleted';
 
+export type MessageType = 'file' | 'text';
+
 @Table({ paranoid: true })
 export class Message extends Model {
+  @Column
+  type: MessageType;
+
   @ForeignKey(() => User)
   senderId: number;
 
@@ -56,4 +61,10 @@ export class Message extends Model {
     defaultValue: 'received',
   })
   status: string;
+
+  @Column
+  fileName: string;
+
+  @Column
+  size: number;
 }

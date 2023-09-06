@@ -39,36 +39,42 @@ export class ConversationsSeeder implements Seeder {
     ]);
     const messages = await this.messageModel.bulkCreate([
       {
+        type: 'text',
         senderId: 1,
         conversationId: privateConv.id,
         content: 'Hello World',
         createdAt: new Date(2023, 4, 18, 8),
       },
       {
+        type: 'text',
         senderId: 2,
         conversationId: privateConv.id,
         content: 'What the hell?',
         createdAt: new Date(2023, 4, 18, 8, 2),
       },
       {
+        type: 'text',
         senderId: 2,
         conversationId: privateConv.id,
         content: 'Stop talking like that',
         createdAt: new Date(2023, 4, 18, 8, 3),
       },
       {
+        type: 'text',
         senderId: 1,
         conversationId: groupConv.id,
         content: 'Hello World',
         createdAt: new Date(2023, 4, 18, 8),
       },
       {
+        type: 'text',
         senderId: 2,
         conversationId: groupConv.id,
         content: 'What the hell?',
         createdAt: new Date(2023, 4, 18, 8, 2),
       },
       {
+        type: 'text',
         senderId: 3,
         conversationId: groupConv.id,
         content: 'Stop talking like that',

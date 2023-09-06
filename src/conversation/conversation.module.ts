@@ -12,6 +12,8 @@ import { Message } from './models/message.model';
 import { MessageService } from './message.service';
 import { MessageUser } from './models/message-recipient.model';
 import { MessageReaction } from './models/message-reaction.model';
+import { ConversationController } from './conversation.controller';
+import { FileUploadService } from 'src/services/FileUploadService';
 
 @Module({
   imports: [
@@ -26,7 +28,14 @@ import { MessageReaction } from './models/message-reaction.model';
       MessageReaction,
     ]),
   ],
-  providers: [ConversationService, UsersService, ConversationGateway, MessageService],
+  providers: [
+    ConversationService,
+    UsersService,
+    ConversationGateway,
+    MessageService,
+    FileUploadService,
+  ],
   exports: [SequelizeModule],
+  controllers: [ConversationController],
 })
 export class ConversationModule {}

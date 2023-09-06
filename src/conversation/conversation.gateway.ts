@@ -71,6 +71,9 @@ export class ConversationGateway extends AuthGateway {
         userId: client.user.id,
         ...createMessageDto,
       });
+      if ('error' in message) {
+        return { error: message.error };
+      }
       const conversation = await this.conversationService.findOneById({
         id: message.conversationId,
         userId: client.user.id,
@@ -90,7 +93,6 @@ export class ConversationGateway extends AuthGateway {
     @MessageBody() { targetId }: CreatePrivateConversationDto,
     @ConnectedSocket() client: ExtendedSocket,
   ): Promise<{ data: PrivateConversationAttributes } | { error: string }> {
-    console.log('!!!!createPrivate!!!!!');
     if (!client.user) {
       return { error: UNAUTHORIZED_ERROR };
     }

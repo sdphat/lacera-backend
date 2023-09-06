@@ -8,10 +8,11 @@ import { Friend } from './models/friend.model';
 import { UserGateway } from './user.gateway';
 import { JwtModule } from '@nestjs/jwt';
 import { UserController } from './user.controller';
+import { FileUploadService } from 'src/services/FileUploadService';
 
 @Module({
   imports: [SequelizeModule.forFeature([User, Friend]), JwtModule],
-  providers: [UsersService, UsersSeeder, ConfigService, UserGateway],
+  providers: [UsersService, UsersSeeder, ConfigService, UserGateway, FileUploadService],
   exports: [UsersService, SequelizeModule, UsersSeeder],
   controllers: [UserController],
 })

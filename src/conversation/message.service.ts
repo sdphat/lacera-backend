@@ -7,6 +7,10 @@ import { Conversation } from '../conversation/models/conversation.model';
 import { MessageUser } from './models/message-recipient.model';
 import { RETRIEVED_MESSAGE_SYSTEM_NOTIFICATION } from '../constants';
 import { MessageReaction, ReactionType } from './models/message-reaction.model';
+import { extname, join } from 'path';
+import { randomUUID } from 'crypto';
+import { stat } from 'fs/promises';
+import { ConfigService } from '@nestjs/config';
 
 const userReturnAttributes = ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl', 'online'];
 
@@ -17,48 +21,62 @@ export class MessageService {
     @InjectModel(Conversation) private readonly conversationModel: typeof Conversation,
     @InjectModel(MessageUser) private readonly messageUserModel: typeof MessageUser,
     @InjectModel(MessageReaction) private readonly messageReactionModel: typeof MessageReaction,
+    private readonly configService: ConfigService,
   ) {}
-  async create({ userId, content, conversationId, postDate, replyTo }: CreateMessageServiceDto) {
+  async create({
+    type,
+    userId,
+    content,
+    conversationId,
+    postDate,
+    replyTo,
+    fileName,
+  }: CreateMessageServiceDto) {
     const conversation = await this.conversationModel.findByPk(conversationId);
-    if (conversation) {
-      const { id } = await this.messageModel.create({
+    if (!conversation) {
+      throw new Error('No conversation found');
+    }
+    let id: number;
+    if (type === 'text') {
+      const response = await this.messageModel.create({
+        type,
         senderId: userId,
         conversationId,
         createdAt: postDate,
-        content,
+        content: content as string,
         replyToId: replyTo,
       });
-      return this.messageModel.findByPk(id, {
-        include: [
-          {
-            model: User,
-            attributes: userReturnAttributes,
-          },
-          {
-            model: MessageUser,
-            required: false,
-            attributes: ['recipientId', 'messageStatus'],
-          },
-          {
-            model: MessageReaction,
-            required: false,
-            attributes: ['type', 'userId'],
-          },
-          {
-            model: Message,
-            as: 'replyTo',
-            include: [
-              {
-                model: User,
-                attributes: ['firstName', 'lastName'],
-              },
-            ],
-          },
-        ],
-      });
-    } else {
-      throw new Error('No conversation found');
+      id = response.id;
     }
+    try {
+      if (type === 'file') {
+        const fileUrl = content;
+        const SELF_URL = this.configService.get<string>('SELF_URL');
+        if (!fileUrl.startsWith(SELF_URL)) {
+          return { error: 'Url malformatted' };
+        }
+
+        // Remove server url from file url and join them together
+        const filePath = join('public', ...fileUrl.replace(SELF_URL, '').split('/').slice(1));
+
+        const file = await stat(filePath);
+
+        const response = await this.messageModel.create({
+          type,
+          senderId: userId,
+          conversationId,
+          createdAt: postDate,
+          content: fileUrl,
+          replyToId: replyTo,
+          fileName,
+          size: file.size,
+        });
+        id = response.id;
+      }
+    } catch (ex) {
+      console.log(ex);
+    }
+    return this.findOneById({ messageId: id });
   }
 
   async findOneById({ messageId }: { messageId: number }) {

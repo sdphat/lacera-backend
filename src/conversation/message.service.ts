@@ -7,9 +7,7 @@ import { Conversation } from '../conversation/models/conversation.model';
 import { MessageUser } from './models/message-recipient.model';
 import { RETRIEVED_MESSAGE_SYSTEM_NOTIFICATION } from '../constants';
 import { MessageReaction, ReactionType } from './models/message-reaction.model';
-import { join } from 'path';
 import { stat } from 'fs/promises';
-import { ConfigService } from '@nestjs/config';
 import { FileUploadService } from '../services/FileUploadService';
 
 const userReturnAttributes = ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl', 'online'];
@@ -21,7 +19,6 @@ export class MessageService {
     @InjectModel(Conversation) private readonly conversationModel: typeof Conversation,
     @InjectModel(MessageUser) private readonly messageUserModel: typeof MessageUser,
     @InjectModel(MessageReaction) private readonly messageReactionModel: typeof MessageReaction,
-    private readonly configService: ConfigService,
     private readonly fileUploadService: FileUploadService,
   ) {}
   async create({

@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Conversation, GroupConversationAttributes } from './models/conversation.model';
 import { User } from '../user/models/user.model';
 import { ConversationUser } from './models/conversation-user.model';
-import { ServiceFetchAllConversationsDto } from './dto/service-fetch-all-conversations.dto';
+import { FetchAllConversationsDto } from './dto/service-fetch-all-conversations.dto';
 import { Message } from './models/message.model';
 import { CreateGroupConversationDto } from './dto/create-group-conversation.dto';
 import { Sequelize } from 'sequelize-typescript';
@@ -192,7 +192,7 @@ export class ConversationService {
     return this.getConversation(conversation.id, userId) as any as GroupConversationAttributes;
   }
 
-  async getAll({ query, user }: ServiceFetchAllConversationsDto) {
+  async getAll({ user }: FetchAllConversationsDto) {
     const { id: userId } = user;
     const matchedConversations = await this.conversationModel.findAll({
       include: [

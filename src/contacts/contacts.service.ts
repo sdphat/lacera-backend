@@ -30,9 +30,6 @@ export class ContactsService {
     @InjectModel(User) private readonly userModel: typeof User,
     @InjectModel(Friend) private readonly friendModel: typeof Friend,
   ) {}
-  create(createContactDto: CreateContactDto) {
-    return 'This action adds a new contact';
-  }
 
   async getAll(userId: number) {
     const friendIds = (
@@ -109,14 +106,6 @@ export class ContactsService {
     return { ...user.dataValues, status: transformFriendStatus(friend, userId) };
   }
 
-  update(id: number, updateContactDto: UpdateContactDto) {
-    return `This action updates a #${id} contact`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} contact`;
-  }
-
   async sendFriendRequest({ senderId, receiverId }: { senderId: number; receiverId: number }) {
     await this.friendModel.findOrCreate({
       where: { userId: senderId, friendId: receiverId },
@@ -168,5 +157,38 @@ export class ContactsService {
         },
       },
     );
+  }
+
+  async getFriendRequestList({ userId }: { userId: number }) {
+    const sentRequests = await this.friendModel.findAll({
+      where: {
+        userId: userId,
+        status: 'pending',
+      },
+      include: [
+        {
+          association: 'Target',
+          attributes: userReturnAttributes,
+        },
+      ],
+    });
+
+    const receivedRequests = await this.friendModel.findAll({
+      where: {
+        friendId: userId,
+        status: 'pending',
+      },
+      include: [
+        {
+          association: 'User',
+          attributes: userReturnAttributes,
+        },
+      ],
+    });
+
+    return {
+      sentRequests,
+      receivedRequests,
+    };
   }
 }

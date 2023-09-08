@@ -7,7 +7,6 @@ import { ConversationService } from './conversation.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { Message } from './models/message.model';
 import { MessageService } from './message.service';
-import { FetchAllConversationsDto } from './dto/fetch-all-conversations.dto';
 import {
   Conversation,
   GroupConversationAttributes,
@@ -25,6 +24,7 @@ import { RemoveConversationDto } from './dto/remove-conversation.dto';
 import { RemoveMessageDto } from './dto/remove-message.dto';
 import { ReactMessageDto } from './dto/react-message.dto';
 import { Socket } from 'socket.io';
+import { FetchAllConversationsDto } from "./dto/service-fetch-all-conversations.dto";
 
 /**
  * Emit message to every user that hasn't deleted that message via 'update' event

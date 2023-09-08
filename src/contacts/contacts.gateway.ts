@@ -123,4 +123,18 @@ export class ContactsGateway extends AuthGateway {
     await this.contactsService.rejectFriendRequest(rejectFriendReqDto);
     return {};
   }
+
+  @ExtendedSubscribeMessage('friendRequestList')
+  @UseGuards(WsAccessTokenGuard)
+  async getFriendRequestList(@ConnectedSocket() client: ExtendedSocket) {
+    if (!client.user) {
+      return { error: UNAUTHORIZED_ERROR };
+    }
+
+    const requests = await this.contactsService.getFriendRequestList({ userId: client.user.id });
+
+    return {
+      data: requests,
+    };
+  }
 }

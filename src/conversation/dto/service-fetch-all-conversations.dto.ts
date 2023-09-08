@@ -1,5 +1,3 @@
-import { FetchAllConversationsDto } from './fetch-all-conversations.dto';
-
-export class ServiceFetchAllConversationsDto extends FetchAllConversationsDto {
+export class FetchAllConversationsDto {
   user: { id: number };
 }

@@ -13,7 +13,7 @@ import { MessageService } from './message.service';
 import { MessageUser } from './models/message-recipient.model';
 import { MessageReaction } from './models/message-reaction.model';
 import { ConversationController } from './conversation.controller';
-import { FileUploadService } from 'src/services/FileUploadService';
+import { FileUploadService } from '../services/FileUploadService';
 
 @Module({
   imports: [

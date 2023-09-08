@@ -3,7 +3,7 @@ import { UsersService } from './users.service';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ConfigService } from '@nestjs/config';
-import { FileUploadService } from 'src/services/FileUploadService';
+import { FileUploadService } from '../services/FileUploadService';
 
 @Controller('user')
 export class UserController {

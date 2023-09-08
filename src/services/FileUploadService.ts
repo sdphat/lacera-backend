@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
-import { writeFile } from 'fs/promises';
+import { unlink, writeFile } from 'fs/promises';
 import { extname, join } from 'path';
 
 @Injectable()
@@ -20,5 +20,26 @@ export class FileUploadService {
     await writeFile(filePath, fileBuffer, { flag: 'w' });
     const publicUrl = `${this.configService.get<string>('SELF_URL')}/${_fileName}`;
     return publicUrl;
+  }
+
+  async remove(filePath?: string) {
+    return unlink(filePath);
+  }
+
+  /**
+   * Convert file's public url to local url
+   * @param fileUrl Public url of the file
+   */
+  filePathToLocal(fileUrl: string) {
+    // Throw error if url doesn't start with server url
+    const SELF_URL = this.configService.get<string>('SELF_URL');
+    if (!fileUrl.startsWith(SELF_URL)) {
+      throw new Error('Url malformatted');
+    }
+
+    // Remove server url from file url and join them together
+    const filePath = join('public', ...fileUrl.replace(SELF_URL, '').split('/').slice(1));
+
+    return filePath;
   }
 }

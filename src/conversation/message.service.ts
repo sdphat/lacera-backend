@@ -7,10 +7,10 @@ import { Conversation } from '../conversation/models/conversation.model';
 import { MessageUser } from './models/message-recipient.model';
 import { RETRIEVED_MESSAGE_SYSTEM_NOTIFICATION } from '../constants';
 import { MessageReaction, ReactionType } from './models/message-reaction.model';
-import { extname, join } from 'path';
-import { randomUUID } from 'crypto';
+import { join } from 'path';
 import { stat } from 'fs/promises';
 import { ConfigService } from '@nestjs/config';
+import { FileUploadService } from '../services/FileUploadService';
 
 const userReturnAttributes = ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl', 'online'];
 
@@ -22,6 +22,7 @@ export class MessageService {
     @InjectModel(MessageUser) private readonly messageUserModel: typeof MessageUser,
     @InjectModel(MessageReaction) private readonly messageReactionModel: typeof MessageReaction,
     private readonly configService: ConfigService,
+    private readonly fileUploadService: FileUploadService,
   ) {}
   async create({
     type,
@@ -51,13 +52,12 @@ export class MessageService {
     try {
       if (type === 'file') {
         const fileUrl = content;
-        const SELF_URL = this.configService.get<string>('SELF_URL');
-        if (!fileUrl.startsWith(SELF_URL)) {
+        let filePath: string;
+        try {
+          filePath = this.fileUploadService.filePathToLocal(fileUrl);
+        } catch (ex) {
           return { error: 'Url malformatted' };
         }
-
-        // Remove server url from file url and join them together
-        const filePath = join('public', ...fileUrl.replace(SELF_URL, '').split('/').slice(1));
 
         const file = await stat(filePath);
 
@@ -119,7 +119,7 @@ export class MessageService {
   }
 
   async softDelete({ messageId, userId }: { messageId: number; userId: number }) {
-    this.messageUserModel.upsert({
+    await this.messageUserModel.upsert({
       recipientId: userId,
       messageId: messageId,
       messageStatus: 'deleted',
@@ -146,6 +146,13 @@ export class MessageService {
     });
 
     if (foundMessage) {
+      if (foundMessage.type === 'file') {
+        await this.fileUploadService.remove(
+          this.fileUploadService.filePathToLocal(foundMessage.content),
+        );
+        foundMessage.fileName = null;
+        foundMessage.size = null;
+      }
       foundMessage.content = RETRIEVED_MESSAGE_SYSTEM_NOTIFICATION;
       foundMessage.status = 'deleted';
       await foundMessage.save();

@@ -24,7 +24,7 @@ import { RemoveConversationDto } from './dto/remove-conversation.dto';
 import { RemoveMessageDto } from './dto/remove-message.dto';
 import { ReactMessageDto } from './dto/react-message.dto';
 import { Socket } from 'socket.io';
-import { FetchAllConversationsDto } from "./dto/service-fetch-all-conversations.dto";
+import { FetchAllConversationsDto } from './dto/service-fetch-all-conversations.dto';
 
 /**
  * Emit message to every user that hasn't deleted that message via 'update' event
@@ -80,7 +80,7 @@ export class ConversationGateway extends AuthGateway {
       });
       const participantIds = conversation.participants.map((p) => p.id);
       client.emit('create', message);
-      participantIds.forEach((id) => client.to(`users/${id}`).emit('update', message));
+      participantIds.forEach((id) => client.to(makeUserRoomId(id)).emit('update', message));
       return { data: message };
     } catch (ex) {
       return { error: ex.message };

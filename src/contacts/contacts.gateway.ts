@@ -1,5 +1,5 @@
 import { ConnectedSocket, MessageBody, WebSocketGateway } from '@nestjs/websockets';
-import { ExtendedSocket, ExtendedSubscribeMessage } from '../SocketUtils';
+import { ExtendedSocket, ExtendedSubscribeMessage, makeUserRoomId } from '../SocketUtils';
 import { AuthGateway } from '../auth/authGateway';
 import { UNAUTHORIZED_ERROR, WsAccessTokenGuard } from '../auth/wsAccessToken.guard';
 import { ContactsService } from './contacts.service';
@@ -14,6 +14,8 @@ import { AcceptFriendReqDto } from './dto/accept-friend-req.dto';
 import { RejectFriendReqDto } from './dto/reject-friend-req.dto';
 import { FetchContactDto } from './dto/fetch-contact.dto';
 import { UsersService } from '../user/users.service';
+
+const FRIEND_STATUS_EVENT = 'friendStatus';
 
 @Public()
 @WebSocketGateway({ namespace: 'contacts', cors: { origin: '*' } })
@@ -79,7 +81,14 @@ export class ContactsGateway extends AuthGateway {
     }
 
     await this.contactsService.sendFriendRequest(sendFriendReqDto);
-    return {};
+    const receiver = await this.contactsService.findOne({
+      userId: client.user.id,
+      contactId: sendFriendReqDto.receiverId,
+    });
+    return {
+      user: receiver,
+      status: 'pending',
+    };
   }
 
   @ExtendedSubscribeMessage('cancelFriendRequest')
@@ -93,7 +102,14 @@ export class ContactsGateway extends AuthGateway {
     }
 
     await this.contactsService.cancelFriendRequest(cancelFriendReqDto);
-    return {};
+    const receiver = await this.contactsService.findOne({
+      userId: client.user.id,
+      contactId: cancelFriendReqDto.receiverId,
+    });
+    return {
+      user: receiver,
+      status: 'cancelled',
+    };
   }
 
   @ExtendedSubscribeMessage('acceptFriendRequest')
@@ -107,7 +123,14 @@ export class ContactsGateway extends AuthGateway {
     }
 
     await this.contactsService.acceptFriendRequest(acceptFriendReqDto);
-    return {};
+    const receiver = await this.contactsService.findOne({
+      userId: client.user.id,
+      contactId: acceptFriendReqDto.receiverId,
+    });
+    return {
+      user: receiver,
+      status: 'accepted',
+    };
   }
 
   @ExtendedSubscribeMessage('rejectFriendRequest')
@@ -121,7 +144,14 @@ export class ContactsGateway extends AuthGateway {
     }
 
     await this.contactsService.rejectFriendRequest(rejectFriendReqDto);
-    return {};
+    const receiver = await this.contactsService.findOne({
+      userId: client.user.id,
+      contactId: rejectFriendReqDto.receiverId,
+    });
+    return {
+      user: receiver,
+      status: 'rejected',
+    };
   }
 
   @ExtendedSubscribeMessage('friendRequestList')

@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
-import { ExtendedSocket } from '../SocketUtils';
+import { ExtendedSocket, makeUserRoomId } from '../SocketUtils';
 import { UsersService } from 'src/user/users.service';
 
 export class AuthGateway implements OnGatewayConnection {
@@ -22,7 +22,7 @@ export class AuthGateway implements OnGatewayConnection {
         ignoreExpiration: false,
         secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
       });
-      client.join(`users/${user.id}`);
+      client.join(makeUserRoomId(user.id));
     } catch (ex) {
       return;
     }

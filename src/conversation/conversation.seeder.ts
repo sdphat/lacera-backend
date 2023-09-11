@@ -19,7 +19,6 @@ export class ConversationsSeeder implements Seeder {
     const groupConv = await this.conversationModel.create({
       type: 'group',
       title: 'Skiing',
-      background: 'background_2.jpg',
     });
     await this.conversationUserModel.bulkCreate([
       { conversationId: privateConv.id, userId: 1 },
@@ -42,42 +41,42 @@ export class ConversationsSeeder implements Seeder {
         type: 'text',
         senderId: 1,
         conversationId: privateConv.id,
-        content: 'Hello World',
+        content: "Hey, how's it going?",
         createdAt: new Date(2023, 4, 18, 8),
       },
       {
         type: 'text',
         senderId: 2,
         conversationId: privateConv.id,
-        content: 'What the hell?',
+        content: "Hi! I'm good, thanks. How about you?",
         createdAt: new Date(2023, 4, 18, 8, 2),
       },
       {
         type: 'text',
         senderId: 2,
         conversationId: privateConv.id,
-        content: 'Stop talking like that',
+        content: "I'm doing well, thanks for asking. Did you catch the game last night?",
         createdAt: new Date(2023, 4, 18, 8, 3),
       },
       {
         type: 'text',
         senderId: 1,
         conversationId: groupConv.id,
-        content: 'Hello World',
+        content: "Hey, how's it going?",
         createdAt: new Date(2023, 4, 18, 8),
       },
       {
         type: 'text',
         senderId: 2,
         conversationId: groupConv.id,
-        content: 'What the hell?',
+        content: "I'm good. How about you",
         createdAt: new Date(2023, 4, 18, 8, 2),
       },
       {
         type: 'text',
         senderId: 3,
         conversationId: groupConv.id,
-        content: 'Stop talking like that',
+        content: "I'm doing great right now. Thanks for asking.",
         createdAt: new Date(2023, 4, 18, 8, 3),
       },
     ]);

@@ -3,14 +3,20 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from './models/user.model';
-import { FindUserConversationsDto } from './dto/find-user-conversations.dto';
-import { Conversation } from '../conversation/models/conversation.model';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User) private userModel: typeof User) {}
+  constructor(
+    @InjectModel(User) private userModel: typeof User,
+    private readonly configService: ConfigService,
+  ) {}
   create(createUserDto: CreateUserDto) {
-    return this.userModel.create(createUserDto);
+    return this.userModel.create({
+      ...createUserDto,
+      avatarUrl: `${this.configService.get<string>('SELF_URL')}/placeholder_avatar.png`,
+      backgroundUrl: `${this.configService.get<string>('SELF_URL')}/placeholder_background.jpg`,
+    });
   }
 
   async findOneById(id: number) {

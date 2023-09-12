@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { LoginDto } from './dto/login.dto';
-import { compare } from 'bcrypt';
+import { compare, hash } from 'bcrypt';
 import { randomUUID } from 'crypto';
 import { RefreshAccessTokenDto } from './dto/refreshToken.dto';
 import { JwtService } from '@nestjs/jwt';
@@ -75,7 +75,10 @@ export class AuthService {
 
     const newUser = await this.usersService.create({
       phoneNumber: registerDto.phoneNumber,
-      password: registerDto.password,
+      password: await hash(
+        registerDto.password,
+        +this.configService.get<number>('PASSWORD_SALT_ROUNDS'),
+      ),
       firstName: registerDto.firstName,
       lastName: registerDto.lastName,
     });

@@ -32,7 +32,7 @@ export class ContactsService {
   ) {}
 
   async getAll(userId: number) {
-    const friendIds = (
+    const outFriendIds = (
       await this.friendModel.findAll({
         where: {
           userId,
@@ -41,6 +41,18 @@ export class ContactsService {
         attributes: ['friendId'],
       })
     ).map((f) => f.friendId);
+
+    const inFriendIds = (
+      await this.friendModel.findAll({
+        where: {
+          friendId: userId,
+          status: 'accepted',
+        },
+        attributes: ['userId'],
+      })
+    ).map((f) => f.userId);
+
+    const friendIds = [...outFriendIds, ...inFriendIds];
 
     const friends = await this.userModel.findAll({
       attributes: userReturnAttributes,

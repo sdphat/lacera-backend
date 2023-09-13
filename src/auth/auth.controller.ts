@@ -67,7 +67,6 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(@Req() request: Request) {
-    console.warn('Running mock up logout function');
     const user = (request as any).user;
     try {
       this.usersService.update(user.id, { online: false, lastActive: new Date() });

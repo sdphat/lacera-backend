@@ -165,8 +165,8 @@ export class ContactsService {
       { status: 'rejected' },
       {
         where: {
-          userId: senderId,
-          friendId: receiverId,
+          userId: receiverId,
+          friendId: senderId,
         },
       },
     );

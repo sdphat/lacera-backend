@@ -14,6 +14,7 @@ import { AcceptFriendReqDto } from './dto/accept-friend-req.dto';
 import { RejectFriendReqDto } from './dto/reject-friend-req.dto';
 import { FetchContactDto } from './dto/fetch-contact.dto';
 import { UsersService } from '../user/users.service';
+import { UnfriendDto } from './dto/unfriend.dto';
 
 const FRIEND_STATUS_EVENT = 'friendStatus';
 
@@ -151,6 +152,26 @@ export class ContactsGateway extends AuthGateway {
     return {
       user: receiver,
       status: 'rejected',
+    };
+  }
+
+  @ExtendedSubscribeMessage('unfriend')
+  @UseGuards(WsAccessTokenGuard)
+  async unfriend(
+    @ConnectedSocket() client: ExtendedSocket,
+    @MessageBody() unfriendDto: UnfriendDto,
+  ) {
+    if (!client.user) {
+      return { error: UNAUTHORIZED_ERROR };
+    }
+
+    await this.contactsService.unfriend(unfriendDto);
+    const receiver = await this.contactsService.findOne({
+      userId: client.user.id,
+      contactId: unfriendDto.receiverId,
+    });
+    return {
+      user: receiver,
     };
   }
 

@@ -6,6 +6,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Friend } from '../user/models/friend.model';
 import { SearchContactsDto } from './dto/search-contacts.dto';
 import { Op } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
 
 const userReturnAttributes = ['id', 'firstName', 'lastName', 'lastActive', 'avatarUrl', 'online'];
 
@@ -169,6 +170,18 @@ export class ContactsService {
         },
       },
     );
+  }
+
+  async unfriend({ senderId, receiverId }: { senderId: number; receiverId: number }) {
+    const friendRelationship = await this.friendModel.findOne({
+      where: {
+        [Op.or]: [
+          { userId: senderId, friendId: receiverId },
+          { userId: receiverId, friendId: senderId },
+        ],
+      },
+    });
+    await friendRelationship.destroy();
   }
 
   async getFriendRequestList({ userId }: { userId: number }) {

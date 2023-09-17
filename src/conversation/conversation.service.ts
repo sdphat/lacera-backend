@@ -24,7 +24,6 @@ const getConversationInclude = (userId: number): Includeable[] => [
     attributes: [],
     where: {
       userId,
-      deleted: false,
     },
   },
   {
@@ -80,7 +79,7 @@ export class ConversationService {
         userId,
       },
     });
-    if (conversationUser.deleted) {
+    if (!conversationUser) {
       return null;
     }
     const conversation = await this.conversationModel.findByPk(conversationId, {
@@ -140,7 +139,6 @@ export class ConversationService {
 
     if (conversationUser) {
       try {
-        conversationUser.deleted = false;
         await conversationUser.save();
         return this.getConversation(conversationUser.conversationId, userId);
       } catch (ex) {
@@ -300,15 +298,6 @@ export class ConversationService {
   }
 
   async remove({ id, userId }: { id: number; userId: number }) {
-    // await this.conversationUserModel.update(
-    //   { deleted: true },
-    //   {
-    //     where: {
-    //       conversationId: id,
-    //       userId,
-    //     },
-    //   },
-    // );
     const messages = await this.messageModel.findAll({
       where: {
         conversationId: id,

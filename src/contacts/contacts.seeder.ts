@@ -11,6 +11,7 @@ export class ContactsSeeder implements Seeder {
       {
         userId: 1,
         friendId: 2,
+        status: 'accepted',
       },
       {
         userId: 1,

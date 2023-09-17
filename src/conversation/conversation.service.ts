@@ -300,15 +300,15 @@ export class ConversationService {
   }
 
   async remove({ id, userId }: { id: number; userId: number }) {
-    await this.conversationUserModel.update(
-      { deleted: true },
-      {
-        where: {
-          conversationId: id,
-          userId,
-        },
-      },
-    );
+    // await this.conversationUserModel.update(
+    //   { deleted: true },
+    //   {
+    //     where: {
+    //       conversationId: id,
+    //       userId,
+    //     },
+    //   },
+    // );
     const messages = await this.messageModel.findAll({
       where: {
         conversationId: id,

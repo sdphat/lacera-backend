@@ -320,4 +320,15 @@ export class ConversationService {
       ),
     );
   }
+
+  async leaveGroup({ id, userId }: { id: number; userId: number }) {
+    const convUser = await this.conversationUserModel.findOne({
+      where: {
+        conversationId: id,
+        userId,
+      },
+    });
+
+    await convUser.destroy();
+  }
 }

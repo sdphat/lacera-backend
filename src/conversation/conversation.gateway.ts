@@ -263,4 +263,19 @@ export class ConversationGateway extends AuthGateway {
 
     return { data: message };
   }
+
+  @ExtendedSubscribeMessage('leaveGroup')
+  @UseGuards()
+  async leaveGroup(
+    @ConnectedSocket() client: ExtendedSocket,
+    @MessageBody() { id }: { id: number },
+  ) {
+    if (!client.user) {
+      return { error: UNAUTHORIZED_ERROR };
+    }
+
+    await this.conversationService.leaveGroup({ id, userId: client.user.id });
+
+    return { data: true };
+  }
 }

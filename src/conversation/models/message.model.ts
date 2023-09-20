@@ -1,8 +1,19 @@
-import { Column, Model, ForeignKey, BelongsTo, Table, HasMany } from 'sequelize-typescript';
+import {
+  Column,
+  Model,
+  ForeignKey,
+  BelongsTo,
+  Table,
+  HasMany,
+  BeforeCreate,
+  BeforeUpdate,
+  AfterFind,
+} from 'sequelize-typescript';
 import { Conversation } from '../models/conversation.model';
 import { User } from '../../user/models/user.model';
 import { MessageUser } from './message-recipient.model';
 import { MessageReaction } from './message-reaction.model';
+import { EncryptionService } from '../../services/EncryptionService';
 
 export type MessageStatus = 'received' | 'deleted';
 
@@ -31,7 +42,17 @@ export class Message extends Model {
   @HasMany(() => MessageReaction)
   reactions: MessageReaction[];
 
-  @Column
+  @Column({
+    set(content: string) {
+      const encryptionService = new EncryptionService();
+      this.setDataValue('content', encryptionService.encrypt(content));
+    },
+    get() {
+      const encryptionService = new EncryptionService();
+      const encryptedContent = this.getDataValue('content');
+      return encryptionService.decrypt(encryptedContent);
+    },
+  })
   content: string;
 
   @Column

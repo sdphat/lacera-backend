@@ -11,6 +11,7 @@ import { ConversationModule } from './conversation/conversation.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { FileUploadService } from './services/FileUploadService';
+import { EncryptionService } from './services/EncryptionService';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { FileUploadService } from './services/FileUploadService';
       useClass: AccessTokenAuthGuard,
     },
     FileUploadService,
+    EncryptionService,
   ],
 })
 export class AppModule {}

@@ -38,7 +38,6 @@ export class ContactsGateway extends AuthGateway {
     }
     const user = client.user;
     let data = [];
-
     data = await this.contactsService.getAll(user.id);
     return { data };
   }

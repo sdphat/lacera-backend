@@ -18,13 +18,14 @@ import { EncryptionService } from './services/EncryptionService';
     SequelizeModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        dialect: 'mysql',
-        host: configService.get<string>('DB_HOST'),
-        port: configService.get<number>('DB_PORT'),
-        username: configService.get<string>('DB_USERNAME'),
-        password: configService.get<string>('DB_PASSWORD'),
-        database: configService.get<string>('DB_NAME'),
+        dialect: 'postgres',
+        uri: configService.get<string>('DB_CONNECTION_STRING'),
         autoLoadModels: true,
+        dialectOptions: {
+          ssl: {
+            required: true,
+          },
+        },
         synchronize: true,
         define: {
           charset: 'utf8mb4',

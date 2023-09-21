@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { Public } from './accessToken.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from '../user/users.service';

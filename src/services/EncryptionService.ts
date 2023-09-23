@@ -29,7 +29,7 @@ export class EncryptionService {
       throw new Error("Missing 'ENCRYPTION_KEY' field in .env for AES encryption");
     }
     const seed = process.env.ENCRYPTION_KEY as string;
-    const paddedSeedBuffer = this.pad16(seed);
+    const paddedSeedBuffer = this.pad16(seed.slice(0, 16));
     const iv = paddedSeedBuffer;
     const key = paddedSeedBuffer;
 
@@ -56,7 +56,7 @@ export class EncryptionService {
     }
     // Initialize iv and key and make sure they have the length of 16x
     const seed = process.env.ENCRYPTION_KEY as string;
-    const paddedSeedBuffer = this.pad16(seed);
+    const paddedSeedBuffer = this.pad16(seed.slice(0, 16));
     const iv = paddedSeedBuffer;
     const key = paddedSeedBuffer;
 
